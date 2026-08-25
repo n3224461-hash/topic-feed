@@ -201,43 +201,16 @@ export class ExplorerView extends ItemView {
 		menu.showAtMouseEvent(event);
 	}
 
+	/** Открыть строку можно кликом, создать — плюсом в шапке. Здесь только то,
+	 *  чему больше негде быть. */
 	private showNodeMenu(node: TreeNode, event: MouseEvent): void {
 		const menu = new Menu();
-
-		if (node.kind === "folder") {
-			menu.addItem((item) =>
-				item
-					.setTitle("Открыть папку")
-					.setIcon("folder-open")
-					.onClick(() => this.openFolder(node.path)),
-			);
-		} else {
-			menu.addItem((item) =>
-				item
-					.setTitle(node.kind === "board" ? "Открыть доску" : "Открыть ленту")
-					.setIcon(ICONS[node.kind])
-					.onClick(() => this.openNode(node)),
-			);
-		}
-
-		menu.addSeparator();
-		menu.addItem((item) =>
-			item
-				.setTitle("Новый топик здесь")
-				.setIcon("message-circle")
-				.onClick(() =>
-					this.plugin.createTopic(node.kind === "folder" ? node.path : this.folderPath),
-				),
-		);
-
-		menu.addSeparator();
 		menu.addItem((item) =>
 			item
 				.setTitle("Удалить")
 				.setIcon("trash-2")
 				.onClick(() => this.plugin.deleteNode(node)),
 		);
-
 		menu.showAtMouseEvent(event);
 	}
 
