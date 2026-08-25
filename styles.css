@@ -82,7 +82,8 @@
 .topic-feed-title {
 	font-weight: var(--font-semibold);
 	color: var(--text-normal);
-	margin-bottom: var(--size-2-1);
+	/* Пустая строка между названием и текстом заметки. */
+	margin-bottom: 1em;
 }
 
 .topic-feed-text {
