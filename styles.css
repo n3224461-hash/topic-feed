@@ -124,7 +124,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: 12px;
+	padding: 8px;
 	flex: 0 0 auto;
 }
 
@@ -166,16 +166,17 @@
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
-	/* По бокам отступа нет: подсветка строки идёт во всю ширину панели,
-	   а её собственные 12px держат содержимое на одной линии с крошками. */
-	padding: 0 0 12px;
+	/* Половина отступа здесь, половина в самой строке: вместе они дают те же
+	   8px, что у крошек, а скруглённая подсветка не упирается в края панели. */
+	padding: 0 4px 8px;
 }
 
 .topic-feed-node {
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: var(--size-4-2) 12px;
+	padding: var(--size-4-2) 4px;
+	border-radius: var(--radius-m);
 	cursor: pointer;
 }
 
