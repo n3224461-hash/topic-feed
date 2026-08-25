@@ -217,3 +217,54 @@ describe("folderTopicCount", () => {
 		expect(folderTopicCount("", topics)).toBe(3);
 	});
 });
+
+describe("buildLevel с досками", () => {
+	const board: TopicInfo = { path: "Проекты/Сайт.md", name: "Сайт", freshness: 100 };
+	const topic: TopicInfo = { path: "Проекты/Курс.md", name: "Курс", freshness: 50 };
+
+	it("доски встают в общий список наравне с топиками", () => {
+		const nodes = buildLevel({
+			folders: [],
+			topics: [topic],
+			boards: [board],
+			allTopics: [topic, board],
+			onlyFoldersWithTopics: true,
+		});
+		expect(nodes.map((node) => node.kind)).toEqual(["board", "topic"]);
+		expect(nodes.map((node) => node.name)).toEqual(["Сайт", "Курс"]);
+	});
+
+	it("порядок задаёт свежесть, а не вид узла", () => {
+		const older: TopicInfo = { ...board, freshness: 10 };
+		const nodes = buildLevel({
+			folders: [],
+			topics: [topic],
+			boards: [older],
+			allTopics: [topic, older],
+			onlyFoldersWithTopics: true,
+		});
+		expect(nodes.map((node) => node.kind)).toEqual(["topic", "board"]);
+	});
+
+	it("папка с одной только доской проходит фильтр", () => {
+		const nodes = buildLevel({
+			folders: ["Проекты"],
+			topics: [],
+			boards: [],
+			allTopics: [board],
+			onlyFoldersWithTopics: true,
+		});
+		expect(nodes).toHaveLength(1);
+		expect(nodes[0]).toMatchObject({ kind: "folder", name: "Проекты", freshness: 100 });
+	});
+
+	it("без досок ведёт себя как прежде", () => {
+		const nodes = buildLevel({
+			folders: [],
+			topics: [topic],
+			allTopics: [topic],
+			onlyFoldersWithTopics: true,
+		});
+		expect(nodes.map((node) => node.kind)).toEqual(["topic"]);
+	});
+});

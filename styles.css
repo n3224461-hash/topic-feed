@@ -204,7 +204,8 @@
 	flex: 0 0 auto;
 }
 
-.topic-feed-node.is-topic .topic-feed-node-icon {
+.topic-feed-node.is-topic .topic-feed-node-icon,
+.topic-feed-node.is-board .topic-feed-node-icon {
 	color: var(--text-accent);
 }
 

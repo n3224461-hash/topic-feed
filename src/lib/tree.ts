@@ -1,7 +1,7 @@
 /** Узел уровня проводника — папка или топик. */
 export interface TreeNode {
-	kind: "folder" | "topic";
-	/** Путь папки без завершающего слэша, либо путь файла топика. */
+	kind: "folder" | "topic" | "board";
+	/** Путь папки без завершающего слэша, либо путь файла топика или доски. */
 	path: string;
 	/** Что показать пользователю. */
 	name: string;
@@ -9,9 +9,9 @@ export interface TreeNode {
 	freshness: number;
 }
 
-/** Топик так, как его знает индекс. */
+/** Топик или доска так, как их знает индекс. */
 export interface TopicInfo {
-	/** Путь файла топика, например "Проекты/Курс.md". */
+	/** Путь файла, например "Проекты/Курс.md". */
 	path: string;
 	name: string;
 	freshness: number;
@@ -67,9 +67,11 @@ export function buildLevel(input: {
 	folders: readonly string[];
 	/** Топики, лежащие непосредственно в текущей папке. */
 	topics: readonly TopicInfo[];
-	/** Все топики хранилища — нужны, чтобы посчитать свежесть подпапок. */
+	/** Доски, лежащие непосредственно в текущей папке. */
+	boards?: readonly TopicInfo[];
+	/** Все топики и доски хранилища — по ним считается свежесть подпапок. */
 	allTopics: readonly TopicInfo[];
-	/** Скрывать ли папки, внутри которых нет ни одного топика. */
+	/** Скрывать ли папки, внутри которых нет ни топиков, ни досок. */
 	onlyFoldersWithTopics: boolean;
 }): TreeNode[] {
 	const folderNodes: TreeNode[] = [];
@@ -93,8 +95,15 @@ export function buildLevel(input: {
 		freshness: topic.freshness,
 	}));
 
+	const boardNodes: TreeNode[] = (input.boards ?? []).map((board) => ({
+		kind: "board",
+		path: board.path,
+		name: board.name,
+		freshness: board.freshness,
+	}));
+
 	// Тип узла на порядок не влияет: свежее — выше, при равной свежести — по имени.
-	return [...folderNodes, ...topicNodes].sort(
+	return [...folderNodes, ...topicNodes, ...boardNodes].sort(
 		(a, b) => b.freshness - a.freshness || a.name.localeCompare(b.name, "ru"),
 	);
 }

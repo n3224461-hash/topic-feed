@@ -114,6 +114,13 @@ export default class TopicFeedPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("active-leaf-change", (leaf) => this.trackActiveFeed(leaf)),
 		);
+		// Доску открывает соседний плагин своим представлением, поэтому ловим
+		// её по открытому файлу, а не по типу вкладки.
+		this.registerEvent(
+			this.app.workspace.on("file-open", (file) => {
+				if (file && this.index.isBoardFile(file)) this.setActiveFeed(file.path);
+			}),
+		);
 	}
 
 	// onunload намеренно пуст: представления, команды и подписки Obsidian снимает сам.
@@ -153,6 +160,13 @@ export default class TopicFeedPlugin extends Plugin {
 		this.setActiveFeed(file.path);
 		await this.feedLeaf().openFile(file);
 		this.swapFeeds();
+	}
+
+	/** Открывает доску. Представление подменит соседний плагин — или файл
+	 *  откроется разметкой, если он выключен. */
+	async openBoard(file: TFile): Promise<void> {
+		this.setActiveFeed(file.path);
+		await this.feedLeaf().openFile(file);
 	}
 
 	/** Открывает ленту «Без топика», переиспользуя уже открытую. */
@@ -295,8 +309,16 @@ export default class TopicFeedPlugin extends Plugin {
 
 	/** Делает строку проводника целью для бабла. */
 	bindDropTarget(el: HTMLElement, node: TreeNode | "orphans"): void {
-		// В папку заметку не перекладываем: связь держится свойством, а не местом.
-		if (node !== "orphans" && node.kind !== "topic") return;
+		// Ни папка, ни доска бабл не принимают: связь ленты держится свойством
+		// топика. Показываем это курсором запрета, а не молчаливым бездействием.
+		if (node !== "orphans" && node.kind !== "topic") {
+			el.addEventListener("dragover", (event) => {
+				if (!this.dragged) return;
+				event.preventDefault();
+				if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
+			});
+			return;
+		}
 
 		el.addEventListener("dragover", (event) => {
 			if (!this.dragged) return;

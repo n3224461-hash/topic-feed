@@ -4,6 +4,17 @@ import type TopicFeedPlugin from "../main";
 
 export const EXPLORER_VIEW = "topic-feed-explorer";
 
+/** Иконки Lucide по видам узлов. У доски та же, что у представления канбана. */
+const ICONS: Record<TreeNode["kind"], string> = {
+	folder: "folder",
+	topic: "message-circle",
+	board: "square-kanban",
+};
+
+function countLabel(count: number): string {
+	return count === 0 ? "пусто" : `${count}`;
+}
+
 /** Проводник ленты: папки и топики одним списком, свежие сверху. */
 export class ExplorerView extends ItemView {
 	/** Папка, внутрь которой провалился пользователь. Корень — пустая строка. */
@@ -121,7 +132,8 @@ export class ExplorerView extends ItemView {
 		const nodes = buildLevel({
 			folders: this.plugin.index.subfolders(this.folderPath),
 			topics: this.plugin.index.topicsInFolder(this.folderPath),
-			allTopics: this.plugin.index.allTopics(),
+			boards: this.plugin.index.boardsInFolder(this.folderPath),
+			allTopics: this.plugin.index.allContainers(),
 			onlyFoldersWithTopics: this.plugin.settings.onlyFoldersWithTopics,
 		});
 
@@ -161,32 +173,25 @@ export class ExplorerView extends ItemView {
 
 	private renderNode(node: TreeNode): void {
 		const row = this.listEl.createDiv({ cls: `topic-feed-node is-${node.kind}` });
-		if (node.kind === "topic" && this.plugin.activeFeed === node.path) {
+		if (node.kind !== "folder" && this.plugin.activeFeed === node.path) {
 			row.addClass("is-active");
 		}
 
 		const icon = row.createDiv({ cls: "topic-feed-node-icon" });
-		setIcon(icon, node.kind === "folder" ? "folder" : "message-circle");
+		setIcon(icon, ICONS[node.kind]);
 
 		const body = row.createDiv({ cls: "topic-feed-node-body" });
 		body.createDiv({ cls: "topic-feed-node-name", text: node.name });
 
 		const note = body.createDiv({ cls: "topic-feed-node-note" });
-		const count =
-			node.kind === "topic"
-				? this.plugin.index.notesOf(node.path).length
-				: folderTopicCount(node.path, this.plugin.index.allTopics());
-		note.setText(count === 0 ? "пусто" : `${count}`);
+		note.setText(countLabel(this.countOf(node)));
 
 		if (node.kind === "folder") {
 			const chevron = row.createDiv({ cls: "topic-feed-node-chevron" });
 			setIcon(chevron, "chevron-right");
 			row.onclick = () => this.openFolder(node.path);
 		} else {
-			row.onclick = () => {
-				const file = this.app.vault.getAbstractFileByPath(node.path);
-				if (file instanceof TFile) void this.plugin.openTopic(file);
-			};
+			row.onclick = () => this.openNode(node);
 		}
 
 		row.addEventListener("contextmenu", (event) => {
@@ -217,22 +222,19 @@ export class ExplorerView extends ItemView {
 	private showNodeMenu(node: TreeNode, event: MouseEvent): void {
 		const menu = new Menu();
 
-		if (node.kind === "topic") {
-			menu.addItem((item) =>
-				item
-					.setTitle("Открыть ленту")
-					.setIcon("messages-square")
-					.onClick(() => {
-						const file = this.app.vault.getAbstractFileByPath(node.path);
-						if (file instanceof TFile) void this.plugin.openTopic(file);
-					}),
-			);
-		} else {
+		if (node.kind === "folder") {
 			menu.addItem((item) =>
 				item
 					.setTitle("Открыть папку")
 					.setIcon("folder-open")
 					.onClick(() => this.openFolder(node.path)),
+			);
+		} else {
+			menu.addItem((item) =>
+				item
+					.setTitle(node.kind === "board" ? "Открыть доску" : "Открыть ленту")
+					.setIcon(ICONS[node.kind])
+					.onClick(() => this.openNode(node)),
 			);
 		}
 
@@ -246,6 +248,23 @@ export class ExplorerView extends ItemView {
 				),
 		);
 		menu.showAtMouseEvent(event);
+	}
+
+	/** Открывает топик лентой, доску — обычным способом: вид подменит её плагин. */
+	private openNode(node: TreeNode): void {
+		const file = this.app.vault.getAbstractFileByPath(node.path);
+		if (!(file instanceof TFile)) return;
+		if (node.kind === "board") void this.plugin.openBoard(file);
+		else void this.plugin.openTopic(file);
+	}
+
+	/** Что показывать счётчиком: содержимое папки, топика или доски. */
+	private countOf(node: TreeNode): number {
+		if (node.kind === "folder") {
+			return folderTopicCount(node.path, this.plugin.index.allContainers());
+		}
+		if (node.kind === "board") return this.plugin.index.taskCount(node.path);
+		return this.plugin.index.notesOf(node.path).length;
 	}
 
 	private folderExists(path: string): boolean {
