@@ -248,8 +248,18 @@ export default class TopicFeedPlugin extends Plugin {
 	// ——— действия над заметкой ———
 
 	/** Меню бабла. */
-	showNoteMenu(file: TFile, event: MouseEvent): void {
+	showNoteMenu(file: TFile, event: MouseEvent, select?: () => void): void {
 		const menu = new Menu();
+
+		if (select) {
+			menu.addItem((item) =>
+				item
+					.setTitle("Выбрать")
+					.setIcon("check-check")
+					.onClick(() => select()),
+			);
+			menu.addSeparator();
+		}
 
 		menu.addItem((item) =>
 			item
@@ -395,6 +405,30 @@ export default class TopicFeedPlugin extends Plugin {
 		}).open();
 	}
 
+	/** Перекладывает выделенные заметки: топик спрашиваем один раз на всех. */
+	moveNotes(files: TFile[]): void {
+		if (files.length === 1 && files[0]) {
+			this.pickTopicFor(files[0]);
+			return;
+		}
+		this.pickTopic((topic) => void this.actions.moveManyToTopic(files, topic));
+	}
+
+	/** Удаляет выделенные заметки — с подтверждением, их много. */
+	deleteNotes(files: TFile[]): void {
+		if (files.length === 1 && files[0]) {
+			void this.actions.remove(files[0]);
+			return;
+		}
+
+		new ConfirmModal(this.app, {
+			title: "Удалить выбранные заметки?",
+			body: `В корзину уйдёт заметок: ${files.length}. Отменить можно будет сразу после удаления.`,
+			confirmText: "Удалить",
+			onConfirm: () => void this.actions.removeMany(files),
+		}).open();
+	}
+
 	/** Спрашивает топик списком и перекладывает заметку. */
 	private pickTopicFor(file: TFile): void {
 		const topics = this.index.allTopics().map((topic) => ({
@@ -413,6 +447,27 @@ export default class TopicFeedPlugin extends Plugin {
 		new TopicPicker(this.app, topics, (choice) => {
 			const topic = this.app.vault.getAbstractFileByPath(choice.path);
 			if (topic instanceof TFile) void this.actions.moveToTopic(file, topic);
+		}).open();
+	}
+
+	/** Показывает список топиков и отдаёт выбранный файл действию. */
+	private pickTopic(onPick: (topic: TFile) => void): void {
+		const topics = this.index.allTopics().map((topic) => ({
+			path: topic.path,
+			name: topic.name,
+			folder: topic.path.includes("/")
+				? topic.path.slice(0, topic.path.lastIndexOf("/"))
+				: "",
+		}));
+
+		if (topics.length === 0) {
+			new Notice("Топиков ещё нет — создайте топик в проводнике ленты");
+			return;
+		}
+
+		new TopicPicker(this.app, topics, (choice) => {
+			const topic = this.app.vault.getAbstractFileByPath(choice.path);
+			if (topic instanceof TFile) onPick(topic);
 		}).open();
 	}
 

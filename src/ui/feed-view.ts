@@ -44,9 +44,12 @@ export class TopicFeedView extends TextFileView {
 			header: () => previewText(this.data, HEADER_LIMIT),
 			emptyText: "В этом топике пока нет заметок. Перетащите сюда бабл из другой ленты.",
 			onOpen: (file) => this.plugin.openNote(this.leaf, file),
-			onContextMenu: (file, event) => this.plugin.showNoteMenu(file, event),
+			onContextMenu: (file, event, select) =>
+				this.plugin.showNoteMenu(file, event, select),
 			onDragStart: (file, event) => this.plugin.startNoteDrag(file, event),
 			onCreate: () => void this.plugin.createNote(this.leaf, this.file),
+			onMoveMany: (files) => this.plugin.moveNotes(files),
+			onDeleteMany: (files) => this.plugin.deleteNotes(files),
 		});
 
 		this.unsubscribe = this.plugin.index.subscribe(() => void this.feed?.render());

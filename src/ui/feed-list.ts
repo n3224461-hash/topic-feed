@@ -21,10 +21,14 @@ export interface FeedListOptions {
 	/** Что написать, когда лента пуста. */
 	emptyText: string;
 	onOpen: (file: TFile) => void;
-	onContextMenu?: (file: TFile, event: MouseEvent) => void;
+	/** Третий аргумент включает бабл в выделение — пункт «Выбрать» в меню. */
+	onContextMenu?: (file: TFile, event: MouseEvent, select: () => void) => void;
 	onDragStart?: (file: TFile, event: DragEvent) => void;
 	/** Клик по бабл-плейсхолдеру внизу ленты. */
 	onCreate?: () => void;
+	/** Действия над выделенными заметками. */
+	onMoveMany?: (files: TFile[]) => void;
+	onDeleteMany?: (files: TFile[]) => void;
 }
 
 /**
@@ -36,6 +40,9 @@ export class FeedList {
 	private listEl: HTMLElement;
 	/** Подвал ленты: бабл создания заметки, который не уезжает при прокрутке. */
 	private footerEl: HTMLElement | null = null;
+
+	/** Пути выделенных заметок. Пока набор пуст, выделения не видно вовсе. */
+	private selected = new Set<string>();
 
 	/** Сколько заметок показано снизу. Растёт при прокрутке вверх. */
 	private shown = PAGE;
@@ -57,7 +64,7 @@ export class FeedList {
 		this.scrollEl = this.containerEl.createDiv({ cls: "topic-feed-scroll" });
 		this.listEl = this.scrollEl.createDiv({ cls: "topic-feed-list" });
 		this.scrollEl.addEventListener("scroll", this.onScroll);
-		this.renderPlaceholder();
+		this.footerEl = this.containerEl.createDiv({ cls: "topic-feed-footer" });
 	}
 
 	destroy(): void {
@@ -70,6 +77,20 @@ export class FeedList {
 		this.shown = PAGE;
 		this.atStart = true;
 		this.cache.clear();
+		this.selected.clear();
+	}
+
+	/** Включает или выключает бабл в выделении. */
+	toggleSelect(path: string): void {
+		if (!this.selected.delete(path)) this.selected.add(path);
+		void this.render();
+	}
+
+	/** Снимает выделение целиком — чекбоксы исчезают. */
+	clearSelection(): void {
+		if (this.selected.size === 0) return;
+		this.selected.clear();
+		void this.render();
 	}
 
 	async render(): Promise<void> {
@@ -91,6 +112,14 @@ export class FeedList {
 			header.createDiv({ cls: "topic-feed-header-label", text: "Описание топика" });
 			header.createDiv({ cls: "topic-feed-header-body", text: headerText });
 		}
+
+		// Выделенное могли удалить или переместить мимо ленты.
+		const alive = new Set(items.map((note) => note.path));
+		for (const path of [...this.selected]) {
+			if (!alive.has(path)) this.selected.delete(path);
+		}
+		this.containerEl.toggleClass("is-selecting", this.selected.size > 0);
+		this.renderFooter();
 
 		if (items.length === 0) {
 			this.listEl.createDiv({ cls: "topic-feed-empty", text: this.opts.emptyText });
@@ -118,14 +147,58 @@ export class FeedList {
 		}
 	}
 
+	/** В подвале либо действия над выделенным, либо бабл создания заметки. */
+	private renderFooter(): void {
+		if (!this.footerEl) return;
+		this.footerEl.empty();
+		if (this.selected.size > 0) this.renderSelectionBar();
+		else this.renderPlaceholder();
+	}
+
+	/** Панель действий: появляется вместе с первым выделенным баблом. */
+	private renderSelectionBar(): void {
+		if (!this.footerEl) return;
+		const bar = this.footerEl.createDiv({ cls: "topic-feed-selection" });
+
+		bar.createSpan({
+			cls: "topic-feed-selection-count",
+			text: `Выбрано: ${this.selected.size}`,
+		});
+
+		if (this.opts.onMoveMany) {
+			const move = bar.createEl("button", { text: "Переместить в топик" });
+			move.onclick = () => this.runOnSelected(this.opts.onMoveMany);
+		}
+
+		if (this.opts.onDeleteMany) {
+			const remove = bar.createEl("button", { cls: "mod-warning", text: "Удалить" });
+			remove.onclick = () => this.runOnSelected(this.opts.onDeleteMany);
+		}
+
+		const cancel = bar.createEl("button", { text: "Отмена" });
+		cancel.onclick = () => this.clearSelection();
+	}
+
+	/** Отдаёт выделенные файлы действию и снимает выделение. */
+	private runOnSelected(action?: (files: TFile[]) => void): void {
+		if (!action) return;
+		const files: TFile[] = [];
+		for (const path of this.selected) {
+			const file = this.fileAt(path);
+			if (file) files.push(file);
+		}
+		if (files.length === 0) return;
+		this.clearSelection();
+		action(files);
+	}
+
 	/**
 	 * Пустой бабл в самом низу: с него начинается новая заметка.
 	 * Живёт в подвале, а не в списке, — поэтому виден при любой прокрутке.
 	 */
 	private renderPlaceholder(): void {
-		if (!this.opts.onCreate) return;
+		if (!this.opts.onCreate || !this.footerEl) return;
 
-		this.footerEl = this.containerEl.createDiv({ cls: "topic-feed-footer" });
 		const row = this.footerEl.createDiv({ cls: "topic-feed-row" });
 		const bubble = row.createDiv({
 			cls: "topic-feed-bubble topic-feed-placeholder",
@@ -140,6 +213,17 @@ export class FeedList {
 
 	private renderBubble(note: FeedNote, text: string): void {
 		const row = this.listEl.createDiv({ cls: "topic-feed-row" });
+
+		// Чекбоксы появляются только когда выделен хотя бы один бабл.
+		if (this.selected.size > 0) {
+			const checked = this.selected.has(note.path);
+			const box = row.createDiv({
+				cls: checked ? "topic-feed-check is-checked" : "topic-feed-check",
+			});
+			if (checked) setIcon(box, "check");
+			box.onclick = () => this.toggleSelect(note.path);
+		}
+
 		const bubble = row.createDiv({ cls: "topic-feed-bubble" });
 		bubble.dataset.path = note.path;
 		bubble.setAttribute("draggable", "true");
@@ -154,6 +238,12 @@ export class FeedList {
 		setTooltip(stamp, `Создана ${fullDateLabel(this.createdAt(note))}`);
 
 		bubble.addEventListener("click", () => {
+			// В режиме выделения клик по баблу переключает выбор, а не открывает
+			// заметку — так же, как в мессенджере.
+			if (this.selected.size > 0) {
+				this.toggleSelect(note.path);
+				return;
+			}
 			const file = this.fileAt(note.path);
 			if (file) this.opts.onOpen(file);
 		});
@@ -162,7 +252,7 @@ export class FeedList {
 			const file = this.fileAt(note.path);
 			if (!file) return;
 			event.preventDefault();
-			this.opts.onContextMenu?.(file, event);
+			this.opts.onContextMenu?.(file, event, () => this.toggleSelect(note.path));
 		});
 
 		bubble.addEventListener("dragstart", (event) => {

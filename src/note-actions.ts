@@ -45,6 +45,81 @@ export class NoteActions {
 		});
 	}
 
+	/** Перекладывает несколько заметок разом. Отмена возвращает все сразу. */
+	async moveManyToTopic(files: TFile[], topic: TFile): Promise<void> {
+		const property = this.linkProperty();
+		const previous: { file: TFile; value: unknown }[] = [];
+
+		for (const file of files) {
+			if (file.path === topic.path) continue;
+			const linktext = this.app.metadataCache.fileToLinktext(topic, file.path);
+			try {
+				await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+					previous.push({ file, value: frontmatter[property] });
+					frontmatter[property] = makeTopicLink(linktext);
+				});
+			} catch (error) {
+				console.error("Topic Feed: не удалось изменить свойство", file.path, error);
+			}
+		}
+
+		if (previous.length === 0) {
+			new Notice("Не удалось переместить заметки — подробности в консоли разработчика");
+			return;
+		}
+
+		const message =
+			previous.length < files.length
+				? `Перемещено в «${topic.basename}»: ${previous.length} из ${files.length}`
+				: `Перемещено в «${topic.basename}»: ${previous.length}`;
+
+		this.undoNotice(message, async () => {
+			for (const item of previous) {
+				await this.restoreProperty(item.file, property, item.value);
+			}
+		});
+	}
+
+	/** Удаляет несколько заметок разом. Отмена возвращает все сразу. */
+	async removeMany(files: TFile[]): Promise<void> {
+		const saved: { path: string; content: string }[] = [];
+
+		for (const file of files) {
+			let content: string;
+			try {
+				content = await this.app.vault.read(file);
+			} catch (error) {
+				console.error("Topic Feed: не удалось прочитать заметку", file.path, error);
+				continue;
+			}
+
+			const path = file.path;
+			try {
+				await this.app.fileManager.trashFile(file);
+			} catch (error) {
+				console.error("Topic Feed: не удалось удалить заметку", path, error);
+				continue;
+			}
+			saved.push({ path, content });
+		}
+
+		if (saved.length === 0) {
+			new Notice("Не удалось удалить заметки — подробности в консоли разработчика");
+			return;
+		}
+
+		const message =
+			saved.length < files.length
+				? `В корзине: ${saved.length} из ${files.length}`
+				: `В корзине: ${saved.length}`;
+
+		this.undoNotice(message, async () => {
+			for (const item of saved) {
+				await this.restoreFile(item.path, item.content);
+			}
+		});
+	}
+
 	/** Убирает связь с топиком: заметка уходит в «Без топика». */
 	async clearTopic(file: TFile): Promise<void> {
 		const property = this.linkProperty();

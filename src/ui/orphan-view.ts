@@ -39,9 +39,12 @@ export class OrphanFeedView extends ItemView {
 			items: () => this.plugin.index.notesWithoutTopic(),
 			emptyText: "Неразобранных заметок нет.",
 			onOpen: (file) => this.plugin.openNote(this.leaf, file),
-			onContextMenu: (file, event) => this.plugin.showNoteMenu(file, event),
+			onContextMenu: (file, event, select) =>
+				this.plugin.showNoteMenu(file, event, select),
 			onDragStart: (file, event) => this.plugin.startNoteDrag(file, event),
 			onCreate: () => void this.plugin.createNote(this.leaf, null),
+			onMoveMany: (files) => this.plugin.moveNotes(files),
+			onDeleteMany: (files) => this.plugin.deleteNotes(files),
 		});
 
 		this.unsubscribe = this.plugin.index.subscribe(() => void this.feed?.render());

@@ -58,6 +58,56 @@
 
 .topic-feed-row {
 	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+
+/* Чекбокс появляется слева от бабла, только когда что-то выделено. */
+.topic-feed-check {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 50%;
+	color: var(--text-on-accent);
+	cursor: pointer;
+}
+
+.topic-feed-check:hover {
+	border-color: var(--interactive-accent);
+}
+
+.topic-feed-check.is-checked {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+}
+
+.topic-feed-check .svg-icon {
+	width: 14px;
+	height: 14px;
+}
+
+/* Пока идёт выделение, бабл — цель выбора, а не ссылка на заметку. */
+.is-selecting .topic-feed-bubble {
+	user-select: none;
+}
+
+/* Панель действий над выделенным. */
+.topic-feed-selection {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+}
+
+.topic-feed-selection-count {
+	flex: 1;
+	min-width: 0;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
 }
 
 /* Подвал прижат к нижнему краю и не участвует в прокрутке. */
