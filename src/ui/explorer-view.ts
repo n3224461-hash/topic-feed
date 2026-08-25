@@ -101,22 +101,6 @@ export class ExplorerView extends ItemView {
 		}
 
 		const filter = this.crumbsEl.createDiv({ cls: "topic-feed-filter" });
-		const button = filter.createEl("button", {
-			cls: "clickable-icon",
-			attr: {
-				"aria-label": this.plugin.settings.onlyFoldersWithTopics
-					? "Показывать все папки"
-					: "Показывать только папки с топиками",
-			},
-		});
-		setIcon(button, this.plugin.settings.onlyFoldersWithTopics ? "filter" : "filter-x");
-		button.onclick = () => {
-			this.plugin.settings.onlyFoldersWithTopics =
-				!this.plugin.settings.onlyFoldersWithTopics;
-			void this.plugin.saveSettings();
-			this.render();
-		};
-
 		const add = filter.createEl("button", {
 			cls: "clickable-icon",
 			attr: { "aria-label": "Создать" },
@@ -140,9 +124,7 @@ export class ExplorerView extends ItemView {
 		if (nodes.length === 0) {
 			this.listEl.createDiv({
 				cls: "topic-feed-empty",
-				text: this.plugin.settings.onlyFoldersWithTopics
-					? "Здесь нет топиков. Создайте топик или снимите фильтр."
-					: "Здесь пусто.",
+				text: "Здесь нет ни топиков, ни досок.",
 			});
 			return;
 		}
