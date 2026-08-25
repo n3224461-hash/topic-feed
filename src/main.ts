@@ -38,6 +38,9 @@ export default class TopicFeedPlugin extends Plugin {
 	/** Вкладка справа от ленты, в которой открываются заметки. Переиспользуется. */
 	private detailLeaf: WorkspaceLeaf | null = null;
 
+	/** Вкладка, в которой живёт лента. Новый топик открывается здесь же. */
+	private feedHomeLeaf: WorkspaceLeaf | null = null;
+
 	/** Заметка, которую сейчас тащат. Через dataTransfer путь ходит ненадёжно. */
 	private dragged: TFile | null = null;
 
@@ -53,6 +56,7 @@ export default class TopicFeedPlugin extends Plugin {
 		this.registerView(EXPLORER_VIEW, (leaf) => new ExplorerView(leaf, this));
 
 		this.addRibbonIcon("messages-square", "Лента", () => void this.openExplorer());
+		this.addRibbonIcon("inbox", "Лента: без топика", () => void this.openOrphanFeed());
 
 		this.addCommand({
 			id: "open-explorer",
@@ -158,6 +162,9 @@ export default class TopicFeedPlugin extends Plugin {
 
 	/** Открывает заметку в панели справа от ленты, переиспользуя уже открытую. */
 	openNote(feedLeaf: WorkspaceLeaf, file: TFile): void {
+		// Ленту могли открыть мимо плагина — из файлового дерева или по ссылке.
+		this.feedHomeLeaf = feedLeaf;
+
 		if (this.detailLeaf && !this.isOpen(this.detailLeaf)) this.detailLeaf = null;
 		if (!this.detailLeaf) {
 			this.detailLeaf = this.app.workspace.createLeafBySplit(feedLeaf, "vertical");
@@ -371,14 +378,24 @@ export default class TopicFeedPlugin extends Plugin {
 
 	private rebuildLater = debounce(() => this.index.rebuild(), 300, true);
 
-	/** Вкладка рабочей области, в которой показываем ленту. */
+	/**
+	 * Вкладка рабочей области, в которой показываем ленту.
+	 *
+	 * Заметку справа лента открывает сама, и после клика по баблу активной
+	 * становится именно она — открывать в ней следующую ленту нельзя. Поэтому
+	 * сначала возвращаем активность вкладке ленты, а дальше решение принимает
+	 * сам Obsidian: закреплённая вкладка не будет перезаписана, рядом с ней
+	 * откроется новая.
+	 */
 	private feedLeaf(): WorkspaceLeaf {
-		// Заметку справа лента открывает сама — вставать на её место нельзя.
-		const active = this.app.workspace.getMostRecentLeaf();
-		if (active && this.detailLeaf && active === this.detailLeaf) {
-			return this.app.workspace.getLeaf(true);
+		const home = this.feedHomeLeaf;
+		if (home && home !== this.detailLeaf && this.isOpen(home)) {
+			this.app.workspace.setActiveLeaf(home, { focus: false });
 		}
-		return this.app.workspace.getLeaf(false);
+
+		const leaf = this.app.workspace.getLeaf(false);
+		this.feedHomeLeaf = leaf;
+		return leaf;
 	}
 
 	/** Переводит открытые markdown-вкладки с топиками в представление ленты. */

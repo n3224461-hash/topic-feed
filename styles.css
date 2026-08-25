@@ -4,7 +4,7 @@
 
 /* ——— лента ——— */
 
-.topic-feed-view .view-content {
+.view-content.topic-feed-view {
 	padding: 0;
 	overflow: hidden;
 }

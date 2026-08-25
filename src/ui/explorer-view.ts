@@ -66,6 +66,11 @@ export class ExplorerView extends ItemView {
 
 	render(): void {
 		if (!this.listEl) return;
+		// Папка могла исчезнуть, пока её содержимое было открыто. Проверяем до
+		// отрисовки крошек, иначе они на один проход покажут удалённую папку.
+		if (this.folderPath !== "" && !this.folderExists(this.folderPath)) {
+			this.folderPath = "";
+		}
 		this.renderCrumbs();
 		this.renderNodes();
 	}
@@ -112,12 +117,6 @@ export class ExplorerView extends ItemView {
 
 	private renderNodes(): void {
 		this.listEl.empty();
-
-		// Папка могла исчезнуть, пока её содержимое было открыто.
-		if (this.folderPath !== "" && !this.folderExists(this.folderPath)) {
-			this.folderPath = "";
-		}
-
 		this.renderOrphans();
 
 		const nodes = buildLevel({
