@@ -44,12 +44,6 @@ export default class TopicFeedPlugin extends Plugin {
 	/** Идёт перенос ленты в левую панель: не запускаем второй такой же. */
 	private moving = false;
 
-	/**
-	 * Папки, созданные через проводник. Пустая папка не проходит фильтр и
-	 * пропала бы сразу после создания — держим её видимой до перезапуска.
-	 */
-	private newFolders = new Set<string>();
-
 	/** Путь заметки, открытой в соседней панели. */
 	private activeNotePath: string | null = null;
 
@@ -115,14 +109,10 @@ export default class TopicFeedPlugin extends Plugin {
 			this.app.vault.on("delete", (file) => {
 				this.index.handleDeleted(file.path);
 				this.asMarkdown.delete(file.path);
-				this.newFolders.delete(file.path);
 			}),
 		);
 		this.registerEvent(
-			this.app.vault.on("rename", (file, oldPath) => {
-				if (this.newFolders.delete(oldPath)) this.newFolders.add(file.path);
-				this.index.handleRenamed();
-			}),
+			this.app.vault.on("rename", () => this.index.handleRenamed()),
 		);
 		// Папку могли создать или удалить мимо плагина — проводник это показывает.
 		this.registerEvent(this.app.vault.on("create", this.rebuildLater));
@@ -605,11 +595,6 @@ export default class TopicFeedPlugin extends Plugin {
 		}).open();
 	}
 
-	/** Папки, которые проводник показывает вопреки фильтру. */
-	get keptFolders(): string[] {
-		return [...this.newFolders];
-	}
-
 	/** Переименование строки проводника: заметки и папки одинаково. */
 	renameNode(node: TreeNode): void {
 		const target = this.app.vault.getAbstractFileByPath(node.path);
@@ -656,8 +641,9 @@ export default class TopicFeedPlugin extends Plugin {
 
 		try {
 			await this.app.vault.createFolder(path);
-			this.newFolders.add(path);
-			this.index.rebuild();
+			// Вместе с папкой заводим одноимённый топик: пустая папка не прошла бы
+			// фильтр и пропала бы из проводника сразу после создания.
+			await this.writeTopic(path, folderName);
 			onCreated?.(path);
 		} catch (error) {
 			console.error("Topic Feed: не удалось создать папку", path, error);

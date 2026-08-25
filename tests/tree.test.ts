@@ -268,39 +268,3 @@ describe("buildLevel с досками", () => {
 		expect(nodes.map((node) => node.kind)).toEqual(["topic"]);
 	});
 });
-
-describe("buildLevel и только что созданные папки", () => {
-	const topic: TopicInfo = { path: "Проекты/Курс.md", name: "Курс", freshness: 5 };
-
-	it("пустая папка из keepFolders проходит фильтр", () => {
-		const nodes = buildLevel({
-			folders: ["Новая папка"],
-			topics: [],
-			allTopics: [topic],
-			onlyFoldersWithTopics: true,
-			keepFolders: ["Новая папка"],
-		});
-		expect(nodes.map((node) => node.name)).toEqual(["Новая папка"]);
-	});
-
-	it("без keepFolders та же папка скрыта", () => {
-		const nodes = buildLevel({
-			folders: ["Новая папка"],
-			topics: [],
-			allTopics: [topic],
-			onlyFoldersWithTopics: true,
-		});
-		expect(nodes).toHaveLength(0);
-	});
-
-	it("чужие папки из keepFolders не всплывают", () => {
-		const nodes = buildLevel({
-			folders: ["Пусто"],
-			topics: [],
-			allTopics: [topic],
-			onlyFoldersWithTopics: true,
-			keepFolders: ["Другая"],
-		});
-		expect(nodes).toHaveLength(0);
-	});
-})

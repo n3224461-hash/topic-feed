@@ -122,7 +122,6 @@ export class ExplorerView extends ItemView {
 			boards: this.plugin.index.boardsInFolder(this.folderPath),
 			allTopics: this.plugin.index.allContainers(),
 			onlyFoldersWithTopics: this.plugin.settings.onlyFoldersWithTopics,
-			keepFolders: this.plugin.keptFolders,
 		});
 
 		if (nodes.length === 0) {
