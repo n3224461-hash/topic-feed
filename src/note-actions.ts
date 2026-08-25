@@ -102,6 +102,19 @@ export class NoteActions {
 		});
 	}
 
+	/** Ставит связь с топиком молча — для только что созданной заметки. */
+	async assignTopic(file: TFile, topic: TFile): Promise<void> {
+		const linktext = this.app.metadataCache.fileToLinktext(topic, file.path);
+		try {
+			await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+				frontmatter[this.linkProperty()] = makeTopicLink(linktext);
+			});
+		} catch (error) {
+			console.error("Topic Feed: не удалось задать топик", file.path, error);
+			new Notice("Заметка создана, но топик задать не удалось");
+		}
+	}
+
 	/**
 	 * Отправляет папку в корзину вместе со всем содержимым.
 	 * Отмены нет — восстановить дерево файлов из памяти нельзя, поэтому

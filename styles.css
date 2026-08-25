@@ -81,6 +81,24 @@
 	opacity: 0.4;
 }
 
+.topic-feed-bubble.topic-feed-placeholder {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	background: transparent;
+	border-style: dashed;
+	color: var(--text-faint);
+}
+
+.topic-feed-bubble.topic-feed-placeholder:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-muted);
+}
+
+.topic-feed-placeholder-icon {
+	display: flex;
+}
+
 .topic-feed-title {
 	font-weight: var(--font-semibold);
 	color: var(--text-normal);

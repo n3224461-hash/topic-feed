@@ -1,4 +1,4 @@
-import { type App, TFile, setTooltip } from "obsidian";
+import { type App, TFile, setIcon, setTooltip } from "obsidian";
 import { sortFeed } from "../lib/ordering";
 import { previewText } from "../lib/preview";
 import { dateLabel, fullDateLabel } from "../lib/date-label";
@@ -23,6 +23,8 @@ export interface FeedListOptions {
 	onOpen: (file: TFile) => void;
 	onContextMenu?: (file: TFile, event: MouseEvent) => void;
 	onDragStart?: (file: TFile, event: DragEvent) => void;
+	/** Клик по бабл-плейсхолдеру внизу ленты. */
+	onCreate?: () => void;
 }
 
 /**
@@ -89,6 +91,7 @@ export class FeedList {
 
 		if (items.length === 0) {
 			this.listEl.createDiv({ cls: "topic-feed-empty", text: this.opts.emptyText });
+			this.renderPlaceholder();
 			return;
 		}
 
@@ -103,6 +106,8 @@ export class FeedList {
 			this.renderBubble(note, texts[index] ?? "");
 		});
 
+		this.renderPlaceholder();
+
 		// Первый показ — вниз, к свежему. Догрузка старого — сохраняем место,
 		// иначе лента прыгает под курсором.
 		if (this.atStart) {
@@ -111,6 +116,22 @@ export class FeedList {
 		} else {
 			this.scrollEl.scrollTop = this.scrollEl.scrollHeight - keepFromBottom;
 		}
+	}
+
+	/** Пустой бабл в самом низу: с него начинается новая заметка. */
+	private renderPlaceholder(): void {
+		if (!this.opts.onCreate) return;
+
+		const row = this.listEl.createDiv({ cls: "topic-feed-row" });
+		const bubble = row.createDiv({
+			cls: "topic-feed-bubble topic-feed-placeholder",
+		});
+
+		const icon = bubble.createSpan({ cls: "topic-feed-placeholder-icon" });
+		setIcon(icon, "plus");
+		bubble.createSpan({ text: "Создать заметку" });
+
+		bubble.onclick = () => this.opts.onCreate?.();
 	}
 
 	private renderBubble(note: FeedNote, text: string): void {

@@ -418,6 +418,34 @@ export default class TopicFeedPlugin extends Plugin {
 
 	// ——— создание ———
 
+	/**
+	 * Создаёт заметку прямо из ленты и открывает её справа — там, где обычно
+	 * читаются заметки. Заметка топика ложится в его папку и сразу получает
+	 * связь; заметка из «Без топика» — в папку для новых заметок Obsidian.
+	 */
+	async createNote(feedLeaf: WorkspaceLeaf, topic: TFile | null): Promise<void> {
+		const parent = topic
+			? (topic.parent?.path ?? "")
+			: this.app.fileManager.getNewFileParent("").path;
+		const folder = parent === "/" ? "" : parent;
+
+		const taken = new Set(
+			this.childNames(folder).map((child) => child.replace(/\.md$/i, "")),
+		);
+		const fileName = uniqueFileName("Новая заметка", taken);
+		const path = normalizePath(folder === "" ? `${fileName}.md` : `${folder}/${fileName}.md`);
+
+		try {
+			const file = await this.app.vault.create(path, "");
+			if (topic) await this.actions.assignTopic(file, topic);
+			this.index.rebuild();
+			this.openNote(feedLeaf, file);
+		} catch (error) {
+			console.error("Topic Feed: не удалось создать заметку", path, error);
+			new Notice("Не удалось создать заметку — подробности в консоли разработчика");
+		}
+	}
+
 	/** Спрашивает название и создаёт заметку-топик в этой папке. */
 	createTopic(folderPath: string): void {
 		new NameModal(this.app, {

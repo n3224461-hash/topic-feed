@@ -41,6 +41,7 @@ export class OrphanFeedView extends ItemView {
 			onOpen: (file) => this.plugin.openNote(this.leaf, file),
 			onContextMenu: (file, event) => this.plugin.showNoteMenu(file, event),
 			onDragStart: (file, event) => this.plugin.startNoteDrag(file, event),
+			onCreate: () => void this.plugin.createNote(this.leaf, null),
 		});
 
 		this.unsubscribe = this.plugin.index.subscribe(() => void this.feed?.render());
