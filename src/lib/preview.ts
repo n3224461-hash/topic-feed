@@ -7,8 +7,10 @@
  * Готовит текст заметки для показа в бабле ленты:
  * срезает свойства, снимает разметку, обрезает по границе слова.
  */
-export function previewText(raw: string, limit: number): string {
-	if (limit < 1) return "";
+export function previewText(raw: string | null | undefined, limit: number): string {
+	// Содержимое вкладки Obsidian подставляет не сразу: пока файл не прочитан,
+	// у представления вместо текста лежит null.
+	if (!raw || limit < 1) return "";
 
 	const body = stripFrontmatter(raw);
 	const plain = stripMarkup(body);

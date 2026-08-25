@@ -146,4 +146,11 @@ describe("previewText: обрезка", () => {
 		expect(previewText("любой текст", 0)).toBe("");
 		expect(previewText("любой текст", -3)).toBe("");
 	});
+
+	// Содержимое вкладки Obsidian подставляет не сразу: пока файл не прочитан,
+	// у представления вместо текста лежит null.
+	it("возвращает пустую строку, когда текста ещё нет", () => {
+		expect(previewText(null, LONG)).toBe("");
+		expect(previewText(undefined, LONG)).toBe("");
+	});
 });
