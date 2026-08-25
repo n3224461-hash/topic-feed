@@ -3,7 +3,7 @@
   "name": "Topic Feed",
   "version": "0.1.0",
   "minAppVersion": "1.6.0",
-  "description": "Плагин Obsidian: Topic Feed",
+  "description": "Заметки лентой, как переписка в мессенджере: топики вместо папок, разбор перетаскиванием.",
   "author": "Бельтюков Михаил",
   "authorUrl": "https://github.com/n3224461-hash",
   "isDesktopOnly": false
