@@ -113,7 +113,8 @@
 /* ——— проводник ——— */
 
 .topic-feed-explorer {
-	padding: 0;
+	/* Общий отступ панели. Всё внутри выравнивается по нему. */
+	padding: 8px;
 	display: flex;
 	flex-direction: column;
 	height: 100%;
@@ -124,7 +125,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: 8px;
+	padding: 0 0 8px;
 	flex: 0 0 auto;
 }
 
@@ -166,16 +167,17 @@
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
-	/* Половина отступа здесь, половина в самой строке: вместе они дают те же
-	   8px, что у крошек, а скруглённая подсветка не упирается в края панели. */
-	padding: 0 4px 8px;
+	padding: 0;
+	/* Список выходит за общий отступ панели, чтобы подсветка строки шла во всю
+	   ширину. Содержимое возвращают на место собственные 8px строки. */
+	margin: 0 -8px;
 }
 
 .topic-feed-node {
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: var(--size-4-2) 4px;
+	padding: 8px;
 	border-radius: var(--radius-m);
 	cursor: pointer;
 }
