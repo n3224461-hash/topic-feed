@@ -47,6 +47,11 @@ export class ExplorerView extends ItemView {
 			this.showCreateMenu(event);
 		});
 
+		// Выбранная лента подсвечивается — за сменой вкладки следим отдельно.
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", () => this.render()),
+		);
+
 		this.unsubscribe = this.plugin.index.subscribe(() => this.render());
 		this.render();
 	}
@@ -144,6 +149,7 @@ export class ExplorerView extends ItemView {
 
 		const count = this.plugin.index.notesWithoutTopic().length;
 		const row = this.listEl.createDiv({ cls: "topic-feed-node is-orphans" });
+		if (this.plugin.activeFeed === "orphans") row.addClass("is-active");
 		const icon = row.createDiv({ cls: "topic-feed-node-icon" });
 		setIcon(icon, "inbox");
 
@@ -160,6 +166,9 @@ export class ExplorerView extends ItemView {
 
 	private renderNode(node: TreeNode): void {
 		const row = this.listEl.createDiv({ cls: `topic-feed-node is-${node.kind}` });
+		if (node.kind === "topic" && this.plugin.activeFeed === node.path) {
+			row.addClass("is-active");
+		}
 
 		const icon = row.createDiv({ cls: "topic-feed-node-icon" });
 		setIcon(icon, node.kind === "folder" ? "folder" : "message-circle");

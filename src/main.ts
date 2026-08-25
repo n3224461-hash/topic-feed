@@ -41,6 +41,9 @@ export default class TopicFeedPlugin extends Plugin {
 	/** Вкладка, в которой живёт лента. Новый топик открывается здесь же. */
 	private feedHomeLeaf: WorkspaceLeaf | null = null;
 
+	/** Какая лента сейчас выбрана: путь топика или «orphans». */
+	private activeFeedKey: string | null = null;
+
 	/** Заметка, которую сейчас тащат. Через dataTransfer путь ходит ненадёжно. */
 	private dragged: TFile | null = null;
 
@@ -108,6 +111,9 @@ export default class TopicFeedPlugin extends Plugin {
 		// Подменяем представление, как только вкладка с топиком появилась.
 		this.registerEvent(this.app.workspace.on("layout-change", () => this.swapFeeds()));
 		this.registerEvent(this.app.workspace.on("file-open", () => this.swapFeeds()));
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", () => this.trackActiveFeed()),
+		);
 	}
 
 	// onunload намеренно пуст: представления, команды и подписки Obsidian снимает сам.
@@ -174,6 +180,24 @@ export default class TopicFeedPlugin extends Plugin {
 		void leaf.openFile(file).then(() => {
 			this.app.workspace.setActiveLeaf(leaf, { focus: true });
 		});
+	}
+
+	/** Лента, выбранная сейчас: путь топика, «orphans» или ничего. */
+	get activeFeed(): string | null {
+		return this.activeFeedKey;
+	}
+
+	/**
+	 * Запоминает открытую ленту. Клик по баблу переводит фокус на заметку —
+	 * в этом случае прежний выбор сохраняем: лента никуда не делась.
+	 */
+	private trackActiveFeed(): void {
+		const view = this.app.workspace.getMostRecentLeaf()?.view;
+		if (view instanceof TopicFeedView) {
+			this.activeFeedKey = view.topicFile?.path ?? null;
+		} else if (view instanceof OrphanFeedView) {
+			this.activeFeedKey = "orphans";
+		}
 	}
 
 	// ——— действия над заметкой ———
