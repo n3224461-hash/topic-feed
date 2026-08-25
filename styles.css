@@ -113,9 +113,8 @@
 /* ——— проводник ——— */
 
 .topic-feed-explorer {
-	/* 12px по бокам держат выравнивание, 8px сверху и снизу отделяют
-	   содержимое от краёв сайдбара. */
-	padding: 8px 12px;
+	/* 8px слева и справа: подсветка строки не упирается в края сайдбара. */
+	padding: 0 8px;
 	display: flex;
 	flex-direction: column;
 	height: 100%;
@@ -126,7 +125,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: var(--size-4-2) 0;
+	padding: var(--size-4-2) 4px;
 	flex: 0 0 auto;
 }
 
@@ -169,16 +168,14 @@
 	min-height: 0;
 	overflow-y: auto;
 	padding: 0 0 var(--size-4-2);
-	/* Список выходит за общий отступ панели, чтобы подсветка строки шла во всю
-	   ширину. Содержимое возвращают на место собственные 12px строки. */
-	margin: 0 -12px;
 }
 
 .topic-feed-node {
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: var(--size-4-2) 12px;
+	/* Вместе с отступом панели даёт те же 12px, что были у содержимого. */
+	padding: var(--size-4-2) 4px;
 	border-radius: var(--radius-m);
 	cursor: pointer;
 }
