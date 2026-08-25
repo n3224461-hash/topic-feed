@@ -86,6 +86,12 @@ export class FeedList {
 		void this.render();
 	}
 
+	/** Отмечает все заметки ленты, а не только нарисованные. */
+	selectAll(): void {
+		for (const note of this.opts.items()) this.selected.add(note.path);
+		void this.render();
+	}
+
 	/** Снимает выделение целиком — чекбоксы исчезают. */
 	clearSelection(): void {
 		if (this.selected.size === 0) return;
@@ -162,10 +168,17 @@ export class FeedList {
 		if (!this.footerEl) return;
 		const bar = this.footerEl.createDiv({ cls: "topic-feed-selection" });
 
-		bar.createSpan({
-			cls: "topic-feed-selection-count",
-			text: `Выбрано: ${this.selected.size}`,
+		const total = this.opts.items().length;
+		const all = total > 0 && this.selected.size >= total;
+
+		const info = bar.createDiv({ cls: "topic-feed-selection-count" });
+		info.createSpan({ text: `Выбрано: ${this.selected.size}` });
+
+		const toggle = info.createSpan({
+			cls: "topic-feed-select-all",
+			text: all ? "Снять все" : "Выбрать все",
 		});
+		toggle.onclick = () => (all ? this.clearSelection() : this.selectAll());
 
 		if (this.opts.onMoveMany) {
 			const move = bar.createEl("button", { text: "Переместить в топик" });

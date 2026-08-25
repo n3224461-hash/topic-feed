@@ -113,8 +113,20 @@
 .topic-feed-selection-count {
 	flex: 1;
 	min-width: 0;
+	display: flex;
+	align-items: baseline;
+	gap: var(--size-4-2);
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
+}
+
+.topic-feed-select-all {
+	color: var(--text-accent);
+	cursor: pointer;
+}
+
+.topic-feed-select-all:hover {
+	text-decoration: underline;
 }
 
 /* Подвал прижат к нижнему краю и не участвует в прокрутке. */
