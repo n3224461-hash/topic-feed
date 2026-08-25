@@ -42,6 +42,7 @@ export class TopicFeedView extends TextFileView {
 			limit: () => this.plugin.settings.previewLength,
 			items: () => (this.file ? this.plugin.index.notesOf(this.file.path) : []),
 			header: () => previewText(this.data, HEADER_LIMIT),
+			activePath: () => this.plugin.activeNote,
 			emptyText: "В этом топике пока нет заметок. Перетащите сюда бабл из другой ленты.",
 			onOpen: (file) => this.plugin.openNote(this.leaf, file),
 			onContextMenu: (file, event, select) =>
@@ -54,6 +55,11 @@ export class TopicFeedView extends TextFileView {
 
 		this.unsubscribe = this.plugin.index.subscribe(() => void this.feed?.render());
 		void this.feed.render();
+	}
+
+	/** Перерисовывает ленту снаружи — например, когда сменилась открытая заметка. */
+	refresh(): void {
+		void this.feed?.render();
 	}
 
 	async onClose(): Promise<void> {

@@ -155,6 +155,12 @@
 	background: var(--background-modifier-hover);
 }
 
+/* Заметка, открытая сейчас в соседней панели. */
+.topic-feed-bubble.is-open {
+	border-color: var(--interactive-accent);
+	background: var(--background-modifier-hover);
+}
+
 .topic-feed-bubble.is-dragging {
 	opacity: 0.4;
 }

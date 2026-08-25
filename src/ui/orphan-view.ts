@@ -37,6 +37,7 @@ export class OrphanFeedView extends ItemView {
 			app: this.app,
 			limit: () => this.plugin.settings.previewLength,
 			items: () => this.plugin.index.notesWithoutTopic(),
+			activePath: () => this.plugin.activeNote,
 			emptyText: "Неразобранных заметок нет.",
 			onOpen: (file) => this.plugin.openNote(this.leaf, file),
 			onContextMenu: (file, event, select) =>
@@ -49,6 +50,11 @@ export class OrphanFeedView extends ItemView {
 
 		this.unsubscribe = this.plugin.index.subscribe(() => void this.feed?.render());
 		void this.feed.render();
+	}
+
+	/** Перерисовывает ленту снаружи — например, когда сменилась открытая заметка. */
+	refresh(): void {
+		void this.feed?.render();
 	}
 
 	async onClose(): Promise<void> {

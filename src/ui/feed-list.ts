@@ -20,6 +20,8 @@ export interface FeedListOptions {
 	header?: () => string;
 	/** Что написать, когда лента пуста. */
 	emptyText: string;
+	/** Путь заметки, открытой в соседней панели: её бабл подсвечивается. */
+	activePath?: () => string | null;
 	onOpen: (file: TFile) => void;
 	/** Третий аргумент включает бабл в выделение — пункт «Выбрать» в меню. */
 	onContextMenu?: (file: TFile, event: MouseEvent, select: () => void) => void;
@@ -240,6 +242,7 @@ export class FeedList {
 		}
 
 		const bubble = row.createDiv({ cls: "topic-feed-bubble" });
+		if (this.opts.activePath?.() === note.path) bubble.addClass("is-open");
 		bubble.dataset.path = note.path;
 		bubble.setAttribute("draggable", "true");
 

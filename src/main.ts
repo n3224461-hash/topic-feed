@@ -43,6 +43,9 @@ export default class TopicFeedPlugin extends Plugin {
 	/** Идёт перенос ленты в левую панель: не запускаем второй такой же. */
 	private moving = false;
 
+	/** Путь заметки, открытой в соседней панели. */
+	private activeNotePath: string | null = null;
+
 	/** Какая лента сейчас выбрана: путь топика или «orphans». */
 	private activeFeedKey: string | null = null;
 
@@ -123,6 +126,7 @@ export default class TopicFeedPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("file-open", (file) => {
 				if (file && this.index.isBoardFile(file)) this.setActiveFeed(file.path);
+				this.setActiveNote(file?.path ?? null);
 			}),
 		);
 	}
@@ -200,6 +204,7 @@ export default class TopicFeedPlugin extends Plugin {
 	/** Открывает заметку в панели справа от ленты, переиспользуя её вкладку. */
 	openNote(feedLeaf: WorkspaceLeaf, file: TFile, focusTitle = false): void {
 		const leaf = rightPaneLeaf(this.app, feedLeaf);
+		this.setActiveNote(file.path);
 		void leaf.openFile(file).then(() => {
 			this.app.workspace.setActiveLeaf(leaf, { focus: true });
 			if (focusTitle) this.focusTitle(leaf);
@@ -232,6 +237,26 @@ export default class TopicFeedPlugin extends Plugin {
 	/** Лента, выбранная сейчас: путь топика, «orphans» или ничего. */
 	get activeFeed(): string | null {
 		return this.activeFeedKey;
+	}
+
+	/** Заметка, открытая сейчас в соседней панели. */
+	get activeNote(): string | null {
+		return this.activeNotePath;
+	}
+
+	/** Отмечает открытую заметку и подсвечивает её бабл во всех лентах. */
+	private setActiveNote(path: string | null): void {
+		if (this.activeNotePath === path) return;
+		this.activeNotePath = path;
+
+		for (const type of [FEED_VIEW, ORPHAN_VIEW]) {
+			for (const leaf of this.app.workspace.getLeavesOfType(type)) {
+				const view = leaf.view;
+				if (view instanceof TopicFeedView || view instanceof OrphanFeedView) {
+					view.refresh();
+				}
+			}
+		}
 	}
 
 	/**
