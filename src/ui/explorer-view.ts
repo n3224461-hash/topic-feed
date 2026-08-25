@@ -91,7 +91,10 @@ export class ExplorerView extends ItemView {
 		const crumbs = breadcrumbs(this.folderPath);
 		const row = this.crumbsEl.createDiv({ cls: "topic-feed-crumbs-row" });
 
-		const root = row.createSpan({ cls: "topic-feed-crumb", text: "Хранилище" });
+		const root = row.createSpan({
+			cls: "topic-feed-crumb",
+			text: this.app.vault.getName(),
+		});
 		root.onclick = () => this.openFolder("");
 
 		for (const crumb of crumbs) {
