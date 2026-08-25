@@ -112,7 +112,7 @@ export default class TopicFeedPlugin extends Plugin {
 		this.registerEvent(this.app.workspace.on("layout-change", () => this.swapFeeds()));
 		this.registerEvent(this.app.workspace.on("file-open", () => this.swapFeeds()));
 		this.registerEvent(
-			this.app.workspace.on("active-leaf-change", () => this.trackActiveFeed()),
+			this.app.workspace.on("active-leaf-change", (leaf) => this.trackActiveFeed(leaf)),
 		);
 	}
 
@@ -145,16 +145,20 @@ export default class TopicFeedPlugin extends Plugin {
 			.getLeavesOfType(FEED_VIEW)
 			.find((leaf) => (leaf.view as TopicFeedView).topicFile?.path === file.path);
 		if (opened) {
+			this.setActiveFeed(file.path);
 			await this.app.workspace.revealLeaf(opened);
 			return;
 		}
 
+		this.setActiveFeed(file.path);
 		await this.feedLeaf().openFile(file);
 		this.swapFeeds();
 	}
 
 	/** Открывает ленту «Без топика», переиспользуя уже открытую. */
 	async openOrphanFeed(): Promise<void> {
+		this.setActiveFeed("orphans");
+
 		const existing = this.app.workspace.getLeavesOfType(ORPHAN_VIEW)[0];
 		if (existing) {
 			await this.app.workspace.revealLeaf(existing);
@@ -188,15 +192,27 @@ export default class TopicFeedPlugin extends Plugin {
 	}
 
 	/**
-	 * Запоминает открытую ленту. Клик по баблу переводит фокус на заметку —
-	 * в этом случае прежний выбор сохраняем: лента никуда не делась.
+	 * Запоминает открытую ленту. Клик по баблу переводит фокус на заметку,
+	 * а клик в проводнике — на сам сайдбар: в обоих случаях прежний выбор
+	 * сохраняем, лента никуда не делась.
 	 */
-	private trackActiveFeed(): void {
-		const view = this.app.workspace.getMostRecentLeaf()?.view;
+	private trackActiveFeed(leaf: WorkspaceLeaf | null): void {
+		const view = leaf?.view;
 		if (view instanceof TopicFeedView) {
-			this.activeFeedKey = view.topicFile?.path ?? null;
+			this.setActiveFeed(view.topicFile?.path ?? null);
 		} else if (view instanceof OrphanFeedView) {
-			this.activeFeedKey = "orphans";
+			this.setActiveFeed("orphans");
+		}
+	}
+
+	/** Ставит отметку выбранной ленты и обновляет проводник. */
+	private setActiveFeed(key: string | null): void {
+		if (this.activeFeedKey === key) return;
+		this.activeFeedKey = key;
+
+		for (const leaf of this.app.workspace.getLeavesOfType(EXPLORER_VIEW)) {
+			const view = leaf.view;
+			if (view instanceof ExplorerView) view.render();
 		}
 	}
 
@@ -432,7 +448,11 @@ export default class TopicFeedPlugin extends Plugin {
 			if (!file || !this.index.isTopicFile(file)) continue;
 			if (this.asMarkdown.has(file.path)) continue;
 
-			void leaf.setViewState({ ...leaf.getViewState(), type: FEED_VIEW });
+			void leaf.setViewState({ ...leaf.getViewState(), type: FEED_VIEW }).then(() => {
+				if (leaf === this.app.workspace.getMostRecentLeaf()) {
+					this.setActiveFeed(file.path);
+				}
+			});
 		}
 	}
 

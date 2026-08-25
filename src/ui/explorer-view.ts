@@ -47,11 +47,6 @@ export class ExplorerView extends ItemView {
 			this.showCreateMenu(event);
 		});
 
-		// Выбранная лента подсвечивается — за сменой вкладки следим отдельно.
-		this.registerEvent(
-			this.app.workspace.on("active-leaf-change", () => this.render()),
-		);
-
 		this.unsubscribe = this.plugin.index.subscribe(() => this.render());
 		this.render();
 	}
