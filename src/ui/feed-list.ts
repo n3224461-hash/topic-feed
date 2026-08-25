@@ -1,4 +1,4 @@
-import { type App, TFile } from "obsidian";
+import { type App, TFile, setTooltip } from "obsidian";
 import { sortFeed } from "../lib/ordering";
 import { previewText } from "../lib/preview";
 import { dateLabel, fullDateLabel } from "../lib/date-label";
@@ -126,7 +126,7 @@ export class FeedList {
 			cls: "topic-feed-stamp",
 			text: dateLabel(note.mtime, Date.now()),
 		});
-		stamp.setAttribute("aria-label", `Создана ${fullDateLabel(this.createdAt(note))}`);
+		setTooltip(stamp, `Создана ${fullDateLabel(this.createdAt(note))}`);
 
 		bubble.addEventListener("click", () => {
 			const file = this.fileAt(note.path);

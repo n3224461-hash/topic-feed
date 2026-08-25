@@ -66,3 +66,11 @@ describe("uniqueFileName", () => {
 		expect(uniqueFileName("Топик", new Set(["Другое", "Топик 2"]))).toBe("Топик");
 	});
 });
+
+describe("safeFileName и ссылки на топик", () => {
+	it("убирает символы, ломающие ссылку [[Имя]]", () => {
+		expect(safeFileName("Проект #2")).toBe("Проект 2");
+		expect(safeFileName("Идеи [важно]")).toBe("Идеи важно");
+		expect(safeFileName("План^2")).toBe("План 2");
+	});
+});

@@ -258,7 +258,12 @@ export default class TopicFeedPlugin extends Plugin {
 			el.addClass("is-drop-target");
 		});
 
-		el.addEventListener("dragleave", () => el.removeClass("is-drop-target"));
+		// Курсор гуляет по внутренним элементам строки — это не выход из неё.
+		el.addEventListener("dragleave", (event) => {
+			const to = event.relatedTarget;
+			if (to instanceof Node && el.contains(to)) return;
+			el.removeClass("is-drop-target");
+		});
 
 		el.addEventListener("drop", (event) => {
 			el.removeClass("is-drop-target");
