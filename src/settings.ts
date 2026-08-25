@@ -6,11 +6,14 @@ export interface PluginSettings {
 	previewLength: number;
 	/** Имя свойства, которым заметка связана с топиком. */
 	linkProperty: string;
+	/** Скрывать ли в проводнике папки, внутри которых нет топиков. */
+	onlyFoldersWithTopics: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
 	previewLength: 500,
 	linkProperty: "topic",
+	onlyFoldersWithTopics: true,
 };
 
 /** Границы длины превью: ниже нечего читать, выше бабл перестаёт быть баблом. */
