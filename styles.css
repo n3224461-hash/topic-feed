@@ -92,6 +92,9 @@
 	display: flex;
 	align-items: center;
 	gap: var(--size-2-2);
+	/* Во всю ширину ленты: это не сообщение, а кнопка. */
+	flex: 1;
+	max-width: none;
 	background: transparent;
 	border-style: dashed;
 	color: var(--text-faint);
