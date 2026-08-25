@@ -34,6 +34,8 @@ export interface FeedListOptions {
 export class FeedList {
 	private scrollEl: HTMLElement;
 	private listEl: HTMLElement;
+	/** Подвал ленты: бабл создания заметки, который не уезжает при прокрутке. */
+	private footerEl: HTMLElement | null = null;
 
 	/** Сколько заметок показано снизу. Растёт при прокрутке вверх. */
 	private shown = PAGE;
@@ -55,6 +57,7 @@ export class FeedList {
 		this.scrollEl = this.containerEl.createDiv({ cls: "topic-feed-scroll" });
 		this.listEl = this.scrollEl.createDiv({ cls: "topic-feed-list" });
 		this.scrollEl.addEventListener("scroll", this.onScroll);
+		this.renderPlaceholder();
 	}
 
 	destroy(): void {
@@ -91,7 +94,6 @@ export class FeedList {
 
 		if (items.length === 0) {
 			this.listEl.createDiv({ cls: "topic-feed-empty", text: this.opts.emptyText });
-			this.renderPlaceholder();
 			return;
 		}
 
@@ -106,8 +108,6 @@ export class FeedList {
 			this.renderBubble(note, texts[index] ?? "");
 		});
 
-		this.renderPlaceholder();
-
 		// Первый показ — вниз, к свежему. Догрузка старого — сохраняем место,
 		// иначе лента прыгает под курсором.
 		if (this.atStart) {
@@ -118,11 +118,15 @@ export class FeedList {
 		}
 	}
 
-	/** Пустой бабл в самом низу: с него начинается новая заметка. */
+	/**
+	 * Пустой бабл в самом низу: с него начинается новая заметка.
+	 * Живёт в подвале, а не в списке, — поэтому виден при любой прокрутке.
+	 */
 	private renderPlaceholder(): void {
 		if (!this.opts.onCreate) return;
 
-		const row = this.listEl.createDiv({ cls: "topic-feed-row" });
+		this.footerEl = this.containerEl.createDiv({ cls: "topic-feed-footer" });
+		const row = this.footerEl.createDiv({ cls: "topic-feed-row" });
 		const bubble = row.createDiv({
 			cls: "topic-feed-bubble topic-feed-placeholder",
 		});

@@ -60,6 +60,13 @@
 	display: flex;
 }
 
+/* Подвал прижат к нижнему краю и не участвует в прокрутке. */
+.topic-feed-footer {
+	flex: 0 0 auto;
+	padding: var(--size-4-2) var(--size-4-4) var(--size-4-3);
+	background: var(--background-primary);
+}
+
 .topic-feed-bubble {
 	position: relative;
 	max-width: min(85%, 46rem);
