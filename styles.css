@@ -2,24 +2,110 @@
    Цвета и отступы берём из переменных темы — иначе плагин сломается
    в тёмной теме или в любой из сотен пользовательских тем. */
 
-.topic-feed-panel {
-	padding: var(--size-4-3);
+/* ——— лента ——— */
+
+.topic-feed-view .view-content {
+	padding: 0;
+	overflow: hidden;
 }
 
-.topic-feed-panel h4 {
-	margin-top: 0;
+.topic-feed-feed {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.topic-feed-scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: var(--size-4-3) var(--size-4-4);
+}
+
+.topic-feed-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+	/* Лента прижата к низу: свежее всегда у нижнего края, как в мессенджере. */
+	min-height: 100%;
+	justify-content: flex-end;
+}
+
+/* Шапка — собственный текст заметки-топика. */
+.topic-feed-header {
+	border-left: 3px solid var(--interactive-accent);
+	background: var(--background-secondary);
+	border-radius: var(--radius-s);
+	padding: var(--size-4-2) var(--size-4-3);
+	margin-bottom: var(--size-4-2);
+}
+
+.topic-feed-header-label {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-accent);
+	margin-bottom: var(--size-2-1);
+}
+
+.topic-feed-header-body {
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	white-space: pre-wrap;
+	max-height: 8em;
+	overflow: hidden;
+}
+
+.topic-feed-row {
+	display: flex;
+}
+
+.topic-feed-bubble {
+	position: relative;
+	max-width: min(85%, 46rem);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-l);
+	border-bottom-left-radius: var(--radius-s);
+	padding: var(--size-4-2) var(--size-4-3);
+	cursor: pointer;
+	transition: background-color 100ms ease;
+}
+
+.topic-feed-bubble:hover {
+	background: var(--background-modifier-hover);
+}
+
+.topic-feed-bubble.is-dragging {
+	opacity: 0.4;
+}
+
+.topic-feed-title {
+	font-weight: var(--font-semibold);
 	color: var(--text-normal);
+	margin-bottom: var(--size-2-1);
 }
 
-.topic-feed-muted {
+.topic-feed-text {
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
+	line-height: var(--line-height-tight);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
 }
 
-.topic-feed-modal .topic-feed-list {
-	max-height: 40vh;
-	overflow-y: auto;
-	margin: var(--size-4-2) 0;
-	padding-left: var(--size-4-4);
-	color: var(--text-muted);
+.topic-feed-stamp {
+	margin-top: var(--size-2-2);
+	text-align: right;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+
+.topic-feed-more,
+.topic-feed-empty {
+	align-self: center;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	padding: var(--size-4-2);
+	text-align: center;
 }
