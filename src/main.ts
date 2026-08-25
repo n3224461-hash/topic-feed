@@ -175,7 +175,7 @@ export default class TopicFeedPlugin extends Plugin {
 		}
 
 		this.setActiveFeed(file.path);
-		await this.feedLeaf().openFile(file);
+		await this.feedLeaf().openFile(file, { active: true });
 		this.swapFeeds();
 	}
 
@@ -183,7 +183,7 @@ export default class TopicFeedPlugin extends Plugin {
 	 *  откроется разметкой, если он выключен. */
 	async openBoard(file: TFile): Promise<void> {
 		this.setActiveFeed(file.path);
-		await this.feedLeaf().openFile(file);
+		await this.feedLeaf().openFile(file, { active: true });
 	}
 
 	/** Открывает ленту «Без топика», переиспользуя уже открытую. */

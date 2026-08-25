@@ -1,62 +1,71 @@
-import { WorkspaceLeaf, type App, type WorkspaceParent } from "obsidian";
+import type { App, WorkspaceLeaf, WorkspaceParent, WorkspaceSplit } from "obsidian";
 
 /**
  * Панели рабочей области.
  *
  * Obsidian не даёт публичного способа спросить «какая панель левее»: он знает
  * только «текущую» вкладку — ту, где последний раз был фокус. Отсюда и берётся
- * непредсказуемость. Порядок панелей читается из дерева rootSplit: порядок
- * детей в нём совпадает с порядком панелей на экране слева направо.
+ * непредсказуемость.
+ *
+ * Порядок панелей берём с экрана: у каждой вкладки есть контейнер, у него —
+ * ближайший `.workspace-tabs`, это и есть панель. Её координата слева даёт
+ * порядок, который видит пользователь. Дерево `rootSplit` для этого не годится:
+ * его поле children в публичных типах не описано.
  */
-type Pane = WorkspaceParent & { children?: unknown[] };
+interface Pane {
+	parent: WorkspaceParent;
+	/** Любая вкладка панели — на случай, если «недавней» у неё ещё не было. */
+	leaf: WorkspaceLeaf;
+	left: number;
+}
 
 /** Панели вкладок рабочей области — слева направо. */
 function panes(app: App): Pane[] {
-	const found: Pane[] = [];
+	const found = new Map<HTMLElement, Pane>();
 
-	const walk = (node: Pane): void => {
-		const children = node.children ?? [];
-		// Панель вкладок — та, в детях которой лежат сами вкладки.
-		if (children.some((child) => child instanceof WorkspaceLeaf)) {
-			found.push(node);
-			return;
-		}
-		for (const child of children) walk(child as Pane);
-	};
+	app.workspace.iterateRootLeaves((leaf) => {
+		// Вкладки всплывающих окон живут в своей системе координат — не их дело.
+		if (leaf.getContainer() !== app.workspace.rootSplit) return;
 
-	walk(app.workspace.rootSplit as Pane);
-	return found;
+		const el = leaf.view.containerEl.closest<HTMLElement>(".workspace-tabs");
+		if (!el || found.has(el)) return;
+
+		found.set(el, {
+			parent: leaf.parent,
+			leaf,
+			left: el.getBoundingClientRect().left,
+		});
+	});
+
+	return [...found.values()].sort((a, b) => a.left - b.left);
 }
 
-/**
- * Отдаёт вкладку в заданной панели так, как это сделал бы сам Obsidian:
- * делает недавнюю вкладку панели активной и просит открыть «в текущей».
- * Тогда закреплённая вкладка не перезаписывается — рядом появится новая.
- */
-function leafIn(app: App, pane: Pane | undefined): WorkspaceLeaf | null {
-	const recent = pane ? app.workspace.getMostRecentLeaf(pane) : null;
-	if (!recent) return null;
+/** Вкладка панели: недавняя, а если она закреплена — новая рядом с ней. */
+function tabIn(app: App, pane: Pane): WorkspaceLeaf {
+	const recent = app.workspace.getMostRecentLeaf(pane.parent) ?? pane.leaf;
+	if (!recent.getViewState().pinned) return recent;
 
-	app.workspace.setActiveLeaf(recent, { focus: false });
-	return app.workspace.getLeaf(false);
+	return app.workspace.createLeafInParent(pane.parent as WorkspaceSplit, -1);
 }
 
 /** Вкладка в крайней левой панели рабочей области. */
 export function leftPaneLeaf(app: App): WorkspaceLeaf {
-	return leafIn(app, panes(app)[0]) ?? app.workspace.getLeaf(false);
+	const pane = panes(app)[0];
+	return pane ? tabIn(app, pane) : app.workspace.getLeaf(false);
 }
 
 /** Вкладка в панели справа от заданной. Такой панели нет — отделяем новую. */
 export function rightPaneLeaf(app: App, leaf: WorkspaceLeaf): WorkspaceLeaf {
 	const all = panes(app);
-	const index = all.indexOf(leaf.parent as Pane);
+	const index = all.findIndex((pane) => pane.parent === leaf.parent);
 	const next = index >= 0 ? all[index + 1] : undefined;
 
-	return leafIn(app, next) ?? app.workspace.createLeafBySplit(leaf, "vertical");
+	return next ? tabIn(app, next) : app.workspace.createLeafBySplit(leaf, "vertical");
 }
 
 /** Лежит ли вкладка в крайней левой панели. Панель одна — считаем, что да. */
 export function inLeftPane(app: App, leaf: WorkspaceLeaf): boolean {
 	const all = panes(app);
-	return all.length < 2 || leaf.parent === all[0];
+	const first = all[0];
+	return !first || all.length < 2 || leaf.parent === first.parent;
 }
