@@ -124,8 +124,10 @@
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: var(--size-4-2) var(--size-4-2) var(--size-4-2) var(--size-4-3);
-	border-bottom: 1px solid var(--background-modifier-border);
+	/* Слева вычитаем собственный отступ крошки: текст должен начинаться
+	   ровно там же, где иконки строк ниже. */
+	padding: var(--size-4-2) var(--size-4-2) var(--size-4-2)
+		calc(var(--size-4-3) - var(--size-2-1));
 	flex: 0 0 auto;
 }
 
@@ -170,14 +172,15 @@
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
-	padding: var(--size-4-1) var(--size-4-2);
+	padding: var(--size-4-1) var(--size-2-2);
 }
 
 .topic-feed-node {
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: var(--size-4-2);
+	/* Вместе с отступом списка даёт ту же левую границу, что у крошек. */
+	padding: var(--size-4-2) calc(var(--size-4-3) - var(--size-2-2));
 	border-radius: var(--radius-m);
 	cursor: pointer;
 }
@@ -189,12 +192,6 @@
 .topic-feed-node.is-drop-target {
 	background: var(--background-modifier-active-hover);
 	box-shadow: inset 0 0 0 2px var(--interactive-accent);
-}
-
-.topic-feed-node.is-orphans {
-	margin-bottom: var(--size-4-1);
-	border-bottom: 1px solid var(--background-modifier-border);
-	border-radius: var(--radius-m) var(--radius-m) 0 0;
 }
 
 .topic-feed-node-icon {
