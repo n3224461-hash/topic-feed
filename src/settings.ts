@@ -8,17 +8,24 @@ export interface PluginSettings {
 	linkProperty: string;
 	/** Скрывать ли в проводнике папки, внутри которых нет топиков. */
 	onlyFoldersWithTopics: boolean;
+	/** Размер текста в бабле ленты, в пикселях. */
+	bubbleFontSize: number;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
 	previewLength: 500,
 	linkProperty: "topic",
 	onlyFoldersWithTopics: true,
+	bubbleFontSize: 14,
 };
 
 /** Границы длины превью: ниже нечего читать, выше бабл перестаёт быть баблом. */
 const MIN_PREVIEW = 40;
 const MAX_PREVIEW = 2000;
+
+/** Границы размера текста в бабле. */
+export const MIN_FONT = 11;
+export const MAX_FONT = 22;
 
 export class SettingTab extends PluginSettingTab {
 	constructor(
@@ -46,6 +53,20 @@ export class SettingTab extends PluginSettingTab {
 						const parsed = Number.parseInt(value, 10);
 						if (Number.isNaN(parsed)) return;
 						this.plugin.settings.previewLength = clamp(parsed, MIN_PREVIEW, MAX_PREVIEW);
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Размер текста в бабле")
+			.setDesc("Название, текст и дата в ленте меняются вместе.")
+			.addSlider((slider) =>
+				slider
+					.setLimits(MIN_FONT, MAX_FONT, 1)
+					.setValue(this.plugin.settings.bubbleFontSize)
+					.setDynamicTooltip()
+					.onChange(async (value) => {
+						this.plugin.settings.bubbleFontSize = value;
 						await this.plugin.saveSettings();
 					}),
 			);

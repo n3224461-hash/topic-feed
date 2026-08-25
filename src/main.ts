@@ -22,6 +22,9 @@ import { ConfirmModal } from "./ui/confirm-modal";
 import { NameModal } from "./ui/name-modal";
 import { TopicPicker } from "./ui/topic-picker";
 
+/** Переменная оформления, через которую задаётся размер текста бабла. */
+const FONT_VARIABLE = "--topic-feed-bubble-size";
+
 /** Формат, которым бабл представляется при перетаскивании. */
 const DRAG_FORMAT = "text/x-topic-feed-note";
 
@@ -54,6 +57,8 @@ export default class TopicFeedPlugin extends Plugin {
 
 		this.index = new TopicIndex(this.app, () => this.settings.linkProperty);
 		this.actions = new NoteActions(this.app, () => this.settings.linkProperty);
+
+		this.applyFontSize();
 
 		this.registerView(FEED_VIEW, (leaf) => new TopicFeedView(leaf, this));
 		this.registerView(ORPHAN_VIEW, (leaf) => new OrphanFeedView(leaf, this));
@@ -124,7 +129,16 @@ export default class TopicFeedPlugin extends Plugin {
 		);
 	}
 
-	// onunload намеренно пуст: представления, команды и подписки Obsidian снимает сам.
+	onunload() {
+		// Представления, команды и подписки Obsidian снимает сам, а вот
+		// переменную оформления на корне документа надо убрать за собой.
+		document.body.style.removeProperty(FONT_VARIABLE);
+	}
+
+	/** Прокидывает размер текста бабла в оформление. */
+	private applyFontSize(): void {
+		document.body.style.setProperty(FONT_VARIABLE, `${this.settings.bubbleFontSize}px`);
+	}
 
 	// ——— открытие ———
 
@@ -546,6 +560,7 @@ export default class TopicFeedPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		this.applyFontSize();
 		this.index.rebuild();
 	}
 }
