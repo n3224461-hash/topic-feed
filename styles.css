@@ -93,6 +93,8 @@
 	display: flex;
 	align-items: center;
 	gap: var(--size-2-2);
+	/* Кнопка, а не сообщение: тянется до общего предела ширины бабла. */
+	flex: 1;
 	background: transparent;
 	border-style: dashed;
 	color: var(--text-faint);
