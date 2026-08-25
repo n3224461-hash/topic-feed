@@ -57,9 +57,9 @@ export class TopicFeedView extends TextFileView {
 		void this.feed.render();
 	}
 
-	/** Перерисовывает ленту снаружи — например, когда сменилась открытая заметка. */
+	/** Переставляет подсветку открытой заметки, не перерисовывая ленту. */
 	refresh(): void {
-		void this.feed?.render();
+		this.feed?.syncActive();
 	}
 
 	async onClose(): Promise<void> {

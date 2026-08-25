@@ -246,6 +246,18 @@ export default class TopicFeedPlugin extends Plugin {
 
 	/** Отмечает открытую заметку и подсвечивает её бабл во всех лентах. */
 	private setActiveNote(path: string | null): void {
+		// Клик по самой ленте Obsidian тоже считает открытием файла — файла
+		// топика. Подсветку заметки это менять не должно.
+		if (path) {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (
+				file instanceof TFile &&
+				(this.index.isTopicFile(file) || this.index.isBoardFile(file))
+			) {
+				return;
+			}
+		}
+
 		if (this.activeNotePath === path) return;
 		this.activeNotePath = path;
 

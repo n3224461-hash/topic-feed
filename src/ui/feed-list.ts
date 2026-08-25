@@ -94,6 +94,20 @@ export class FeedList {
 		void this.render();
 	}
 
+	/**
+	 * Переставляет подсветку открытой заметки, не трогая разметку ленты.
+	 * Полная перерисовка здесь недопустима: она сносит бабл из-под курсора
+	 * между нажатием и кликом, и клик пропадает.
+	 */
+	syncActive(): void {
+		const active = this.opts.activePath?.() ?? null;
+		for (const el of Array.from(
+			this.listEl.querySelectorAll<HTMLElement>(".topic-feed-bubble"),
+		)) {
+			el.toggleClass("is-open", el.dataset.path === active);
+		}
+	}
+
 	/** Снимает выделение целиком — чекбоксы исчезают. */
 	clearSelection(): void {
 		if (this.selected.size === 0) return;
