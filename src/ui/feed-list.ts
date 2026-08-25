@@ -157,10 +157,10 @@ export class FeedList {
 	private renderFooter(): void {
 		if (!this.footerEl) return;
 		this.footerEl.empty();
-		// Панель действий встаёт над баблом создания, а не вместо него: внизу
-		// справа проходит строка состояния Obsidian и накрывает кнопки собой.
+		// Пока идёт выделение, подвал занят быстрыми действиями — создавать
+		// заметку в этот момент всё равно некуда.
 		if (this.selected.size > 0) this.renderSelectionBar();
-		this.renderPlaceholder();
+		else this.renderPlaceholder();
 	}
 
 	/** Панель действий: появляется вместе с первым выделенным баблом. */
@@ -176,7 +176,7 @@ export class FeedList {
 
 		const toggle = info.createSpan({
 			cls: "topic-feed-select-all",
-			text: all ? "Снять все" : "Выбрать все",
+			text: all ? "Снять выделение" : "Выбрать все",
 		});
 		toggle.onclick = () => (all ? this.clearSelection() : this.selectAll());
 
