@@ -124,10 +124,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	/* Слева вычитаем собственный отступ крошки: текст должен начинаться
-	   ровно там же, где иконки строк ниже. */
-	padding: var(--size-4-2) var(--size-4-2) var(--size-4-2)
-		calc(var(--size-4-3) - var(--size-2-1));
+	padding: 12px;
 	flex: 0 0 auto;
 }
 
@@ -144,13 +141,10 @@
 
 .topic-feed-crumb {
 	cursor: pointer;
-	border-radius: var(--radius-s);
-	padding: 0 var(--size-2-1);
 }
 
 .topic-feed-crumb:hover {
 	color: var(--text-normal);
-	background: var(--background-modifier-hover);
 }
 
 .topic-feed-crumbs-row .topic-feed-crumb:last-child {
@@ -172,16 +166,16 @@
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
-	padding: var(--size-4-1) var(--size-2-2);
+	/* По бокам отступа нет: подсветка строки идёт во всю ширину панели,
+	   а её собственные 12px держат содержимое на одной линии с крошками. */
+	padding: 0 0 12px;
 }
 
 .topic-feed-node {
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	/* Вместе с отступом списка даёт ту же левую границу, что у крошек. */
-	padding: var(--size-4-2) calc(var(--size-4-3) - var(--size-2-2));
-	border-radius: var(--radius-m);
+	padding: var(--size-4-2) 12px;
 	cursor: pointer;
 }
 
