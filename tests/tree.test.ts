@@ -6,6 +6,7 @@ import {
 	folderHasTopics,
 	isInsideFolder,
 	type TopicInfo,
+	folderTopicCount,
 } from "../src/lib/tree";
 
 const topic = (path: string, freshness: number, name = path): TopicInfo => ({
@@ -190,5 +191,29 @@ describe("breadcrumbs", () => {
 			{ name: "Проекты", path: "Проекты" },
 			{ name: "Архив", path: "Проекты/Архив" },
 		]);
+	});
+});
+
+describe("folderTopicCount", () => {
+	const topics = [
+		{ path: "Проекты/Курс.md", name: "Курс", freshness: 5 },
+		{ path: "Проекты/Архив/Старое.md", name: "Старое", freshness: 3 },
+		{ path: "Дом/Идеи.md", name: "Идеи", freshness: 9 },
+	];
+
+	it("считает топики вместе с вложенными папками", () => {
+		expect(folderTopicCount("Проекты", topics)).toBe(2);
+	});
+
+	it("считает только свою ветку", () => {
+		expect(folderTopicCount("Дом", topics)).toBe(1);
+	});
+
+	it("в папке без топиков — ноль", () => {
+		expect(folderTopicCount("Пусто", topics)).toBe(0);
+	});
+
+	it("корень содержит все топики", () => {
+		expect(folderTopicCount("", topics)).toBe(3);
 	});
 });

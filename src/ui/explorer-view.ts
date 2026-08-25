@@ -1,6 +1,5 @@
 import { ItemView, Menu, TFile, TFolder, setIcon, type WorkspaceLeaf } from "obsidian";
-import { breadcrumbs, buildLevel, type TreeNode } from "../lib/tree";
-import { dateLabel } from "../lib/date-label";
+import { breadcrumbs, buildLevel, folderTopicCount, type TreeNode } from "../lib/tree";
 import type TopicFeedPlugin from "../main";
 
 export const EXPLORER_VIEW = "topic-feed-explorer";
@@ -169,12 +168,11 @@ export class ExplorerView extends ItemView {
 		body.createDiv({ cls: "topic-feed-node-name", text: node.name });
 
 		const note = body.createDiv({ cls: "topic-feed-node-note" });
-		if (node.kind === "topic") {
-			const count = this.plugin.index.notesOf(node.path).length;
-			note.setText(count === 0 ? "пусто" : `${count}`);
-		} else if (node.freshness > 0) {
-			note.setText(dateLabel(node.freshness, Date.now()));
-		}
+		const count =
+			node.kind === "topic"
+				? this.plugin.index.notesOf(node.path).length
+				: folderTopicCount(node.path, this.plugin.index.allTopics());
+		note.setText(count === 0 ? "пусто" : `${count}`);
 
 		if (node.kind === "folder") {
 			const chevron = row.createDiv({ cls: "topic-feed-node-chevron" });

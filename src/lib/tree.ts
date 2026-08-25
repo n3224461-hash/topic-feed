@@ -45,6 +45,14 @@ export function folderFreshness(
 	return max;
 }
 
+/** Сколько топиков лежит внутри папки, включая вложенные. */
+export function folderTopicCount(
+	folderPath: string,
+	topics: readonly TopicInfo[],
+): number {
+	return topics.filter((topic) => isInsideFolder(topic.path, folderPath)).length;
+}
+
 /** Есть ли внутри папки хоть один топик, включая вложенные. */
 export function folderHasTopics(
 	folderPath: string,
