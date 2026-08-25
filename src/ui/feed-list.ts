@@ -151,8 +151,10 @@ export class FeedList {
 	private renderFooter(): void {
 		if (!this.footerEl) return;
 		this.footerEl.empty();
+		// Панель действий встаёт над баблом создания, а не вместо него: внизу
+		// справа проходит строка состояния Obsidian и накрывает кнопки собой.
 		if (this.selected.size > 0) this.renderSelectionBar();
-		else this.renderPlaceholder();
+		this.renderPlaceholder();
 	}
 
 	/** Панель действий: появляется вместе с первым выделенным баблом. */

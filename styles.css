@@ -95,12 +95,19 @@
 	user-select: none;
 }
 
-/* Панель действий над выделенным. */
+/* Панель действий над выделенным: та же колонка, что у баблов, кнопки справа. */
 .topic-feed-selection {
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
 	gap: var(--size-4-2);
+	max-width: min(85%, 680px);
+	margin-bottom: var(--size-4-2);
+}
+
+/* Пока идёт выделение, подвал сдвигается вместе с баблами — на ширину отметки. */
+.is-selecting .topic-feed-footer {
+	padding-left: calc(var(--size-4-4) + 20px + var(--size-4-2));
 }
 
 .topic-feed-selection-count {
