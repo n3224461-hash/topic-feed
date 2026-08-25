@@ -18,6 +18,7 @@ import type { TreeNode } from "./lib/tree";
 import { EXPLORER_VIEW, ExplorerView } from "./ui/explorer-view";
 import { FEED_VIEW, TopicFeedView } from "./ui/feed-view";
 import { ORPHAN_VIEW, OrphanFeedView } from "./ui/orphan-view";
+import { ConfirmModal } from "./ui/confirm-modal";
 import { NameModal } from "./ui/name-modal";
 import { TopicPicker } from "./ui/topic-picker";
 
@@ -353,6 +354,33 @@ export default class TopicFeedPlugin extends Plugin {
 		});
 	}
 
+	/**
+	 * Удаление из проводника. Топик и доска — обычные заметки, уходят в корзину
+	 * с возможностью отмены. Папка уходит вместе со всем содержимым, поэтому
+	 * сначала спрашиваем подтверждение: отменить это нельзя.
+	 */
+	deleteNode(node: TreeNode): void {
+		const target = this.app.vault.getAbstractFileByPath(node.path);
+
+		if (target instanceof TFile) {
+			void this.actions.remove(target);
+			return;
+		}
+
+		if (!(target instanceof TFolder)) return;
+
+		const count = countFiles(target);
+		new ConfirmModal(this.app, {
+			title: `Удалить папку «${target.name}»?`,
+			body:
+				count === 0
+					? "Папка пуста. Она уйдёт в корзину."
+					: `Вместе с папкой в корзину уйдёт файлов: ${count}. Отменить это будет нельзя.`,
+			confirmText: "Удалить",
+			onConfirm: () => void this.actions.removeFolder(target),
+		}).open();
+	}
+
 	/** Спрашивает топик списком и перекладывает заметку. */
 	private pickTopicFor(file: TFile): void {
 		const topics = this.index.allTopics().map((topic) => ({
@@ -520,4 +548,14 @@ export default class TopicFeedPlugin extends Plugin {
 		await this.saveData(this.settings);
 		this.index.rebuild();
 	}
+}
+
+/** Сколько файлов лежит внутри папки, включая вложенные. */
+function countFiles(folder: TFolder): number {
+	let count = 0;
+	for (const child of folder.children) {
+		if (child instanceof TFolder) count += countFiles(child);
+		else count += 1;
+	}
+	return count;
 }

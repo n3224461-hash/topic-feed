@@ -102,6 +102,23 @@ export class NoteActions {
 		});
 	}
 
+	/**
+	 * Отправляет папку в корзину вместе со всем содержимым.
+	 * Отмены нет — восстановить дерево файлов из памяти нельзя, поэтому
+	 * вызывающая сторона обязана спросить подтверждение.
+	 */
+	async removeFolder(folder: TFolder): Promise<void> {
+		const name = folder.name;
+		try {
+			await this.app.fileManager.trashFile(folder);
+		} catch (error) {
+			console.error("Topic Feed: не удалось удалить папку", folder.path, error);
+			new Notice("Не удалось удалить папку — подробности в консоли разработчика");
+			return;
+		}
+		new Notice(`Папка «${name}» в корзине`);
+	}
+
 	/** Переименовывает заметку, сохраняя папку. Ссылки обновляет Obsidian. */
 	async rename(file: TFile, name: string): Promise<void> {
 		const folder = file.parent?.path ?? "";

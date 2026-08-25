@@ -229,6 +229,15 @@ export class ExplorerView extends ItemView {
 					this.plugin.createTopic(node.kind === "folder" ? node.path : this.folderPath),
 				),
 		);
+
+		menu.addSeparator();
+		menu.addItem((item) =>
+			item
+				.setTitle("Удалить")
+				.setIcon("trash-2")
+				.onClick(() => this.plugin.deleteNode(node)),
+		);
+
 		menu.showAtMouseEvent(event);
 	}
 
