@@ -198,11 +198,35 @@ export default class TopicFeedPlugin extends Plugin {
 	}
 
 	/** Открывает заметку в панели справа от ленты, переиспользуя её вкладку. */
-	openNote(feedLeaf: WorkspaceLeaf, file: TFile): void {
+	openNote(feedLeaf: WorkspaceLeaf, file: TFile, focusTitle = false): void {
 		const leaf = rightPaneLeaf(this.app, feedLeaf);
 		void leaf.openFile(file).then(() => {
 			this.app.workspace.setActiveLeaf(leaf, { focus: true });
+			if (focusTitle) this.focusTitle(leaf);
 		});
+	}
+
+	/**
+	 * Ставит курсор в заголовок заметки и выделяет его целиком: у новой заметки
+	 * первым делом хочется задать название, а «Новая заметка» — не название.
+	 * Если заголовок отключён в настройках Obsidian, фокус остаётся в тексте.
+	 */
+	private focusTitle(leaf: WorkspaceLeaf): void {
+		// Заголовок появляется не сразу — даём Obsidian дорисовать вкладку.
+		window.setTimeout(() => {
+			const container = leaf.view.containerEl;
+			if (!container.isConnected) return;
+
+			const title = container.querySelector<HTMLElement>(".inline-title");
+			if (!title) return;
+
+			title.focus();
+			const range = document.createRange();
+			range.selectNodeContents(title);
+			const selection = window.getSelection();
+			selection?.removeAllRanges();
+			selection?.addRange(range);
+		}, 0);
 	}
 
 	/** Лента, выбранная сейчас: путь топика, «orphans» или ничего. */
@@ -484,7 +508,7 @@ export default class TopicFeedPlugin extends Plugin {
 			const file = await this.app.vault.create(path, "");
 			if (topic) await this.actions.assignTopic(file, topic);
 			this.index.rebuild();
-			this.openNote(feedLeaf, file);
+			this.openNote(feedLeaf, file, true);
 		} catch (error) {
 			console.error("Topic Feed: не удалось создать заметку", path, error);
 			new Notice("Не удалось создать заметку — подробности в консоли разработчика");
