@@ -122,6 +122,7 @@ export class ExplorerView extends ItemView {
 			boards: this.plugin.index.boardsInFolder(this.folderPath),
 			allTopics: this.plugin.index.allContainers(),
 			onlyFoldersWithTopics: this.plugin.settings.onlyFoldersWithTopics,
+			keepFolders: this.plugin.keptFolders,
 		});
 
 		if (nodes.length === 0) {
@@ -199,7 +200,10 @@ export class ExplorerView extends ItemView {
 			item
 				.setTitle("Новая папка")
 				.setIcon("folder-plus")
-				.onClick(() => this.plugin.createFolder(this.folderPath)),
+				// Проваливаемся внутрь: следующий шаг — создать там топик.
+				.onClick(() =>
+					this.plugin.createFolder(this.folderPath, (path) => this.openFolder(path)),
+				),
 		);
 		menu.showAtMouseEvent(event);
 	}
@@ -208,6 +212,12 @@ export class ExplorerView extends ItemView {
 	 *  чему больше негде быть. */
 	private showNodeMenu(node: TreeNode, event: MouseEvent): void {
 		const menu = new Menu();
+		menu.addItem((item) =>
+			item
+				.setTitle("Переименовать")
+				.setIcon("pencil")
+				.onClick(() => this.plugin.renameNode(node)),
+		);
 		menu.addItem((item) =>
 			item
 				.setTitle("Удалить")

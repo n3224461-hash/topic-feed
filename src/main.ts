@@ -44,6 +44,12 @@ export default class TopicFeedPlugin extends Plugin {
 	/** Идёт перенос ленты в левую панель: не запускаем второй такой же. */
 	private moving = false;
 
+	/**
+	 * Папки, созданные через проводник. Пустая папка не проходит фильтр и
+	 * пропала бы сразу после создания — держим её видимой до перезапуска.
+	 */
+	private newFolders = new Set<string>();
+
 	/** Путь заметки, открытой в соседней панели. */
 	private activeNotePath: string | null = null;
 
@@ -109,9 +115,15 @@ export default class TopicFeedPlugin extends Plugin {
 			this.app.vault.on("delete", (file) => {
 				this.index.handleDeleted(file.path);
 				this.asMarkdown.delete(file.path);
+				this.newFolders.delete(file.path);
 			}),
 		);
-		this.registerEvent(this.app.vault.on("rename", () => this.index.handleRenamed()));
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				if (this.newFolders.delete(oldPath)) this.newFolders.add(file.path);
+				this.index.handleRenamed();
+			}),
+		);
 		// Папку могли создать или удалить мимо плагина — проводник это показывает.
 		this.registerEvent(this.app.vault.on("create", this.rebuildLater));
 
@@ -584,12 +596,35 @@ export default class TopicFeedPlugin extends Plugin {
 	}
 
 	/** Спрашивает название и создаёт папку. */
-	createFolder(folderPath: string): void {
+	createFolder(folderPath: string, onCreated?: (path: string) => void): void {
 		new NameModal(this.app, {
 			title: "Новая папка",
 			placeholder: "Название папки",
 			confirmText: "Создать",
-			onSubmit: (name) => void this.writeFolder(folderPath, name),
+			onSubmit: (name) => void this.writeFolder(folderPath, name, onCreated),
+		}).open();
+	}
+
+	/** Папки, которые проводник показывает вопреки фильтру. */
+	get keptFolders(): string[] {
+		return [...this.newFolders];
+	}
+
+	/** Переименование строки проводника: заметки и папки одинаково. */
+	renameNode(node: TreeNode): void {
+		const target = this.app.vault.getAbstractFileByPath(node.path);
+		if (!(target instanceof TFile) && !(target instanceof TFolder)) return;
+
+		new NameModal(this.app, {
+			title: "Новое название",
+			placeholder: node.kind === "folder" ? "Название папки" : "Название заметки",
+			initial: node.name,
+			confirmText: "Переименовать",
+			onSubmit: (name) => {
+				const safe = safeFileName(name);
+				if (target instanceof TFile) void this.actions.rename(target, safe);
+				else void this.actions.renameFolder(target, safe);
+			},
 		}).open();
 	}
 
@@ -610,14 +645,20 @@ export default class TopicFeedPlugin extends Plugin {
 		}
 	}
 
-	private async writeFolder(folderPath: string, name: string): Promise<void> {
+	private async writeFolder(
+		folderPath: string,
+		name: string,
+		onCreated?: (path: string) => void,
+	): Promise<void> {
 		const taken = new Set(this.childNames(folderPath));
 		const folderName = uniqueFileName(safeFileName(name), taken);
 		const path = normalizePath(folderPath === "" ? folderName : `${folderPath}/${folderName}`);
 
 		try {
 			await this.app.vault.createFolder(path);
+			this.newFolders.add(path);
 			this.index.rebuild();
+			onCreated?.(path);
 		} catch (error) {
 			console.error("Topic Feed: не удалось создать папку", path, error);
 			new Notice("Не удалось создать папку — подробности в консоли разработчика");

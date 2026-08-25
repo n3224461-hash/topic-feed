@@ -238,6 +238,36 @@ export class NoteActions {
 		});
 	}
 
+	/** Переименовывает папку. Ссылки на заметки внутри обновляет Obsidian. */
+	async renameFolder(folder: TFolder, name: string): Promise<void> {
+		const parent = folder.parent?.path ?? "";
+		const target = parent === "" || parent === "/" ? name : `${parent}/${name}`;
+		if (target === folder.path) return;
+
+		if (this.pathTaken(target)) {
+			new Notice("Папка с таким именем уже есть");
+			return;
+		}
+
+		const before = folder.path;
+		try {
+			await this.app.fileManager.renameFile(folder, target);
+		} catch (error) {
+			console.error("Topic Feed: не удалось переименовать папку", folder.path, error);
+			new Notice("Не удалось переименовать папку — подробности в консоли разработчика");
+			return;
+		}
+
+		this.undoNotice(`Папка переименована в «${name}»`, async () => {
+			try {
+				await this.app.fileManager.renameFile(folder, before);
+			} catch (error) {
+				console.error("Topic Feed: не удалось вернуть имя папки", before, error);
+				new Notice("Не удалось вернуть имя — подробности в консоли разработчика");
+			}
+		});
+	}
+
 	/** Кладёт в буфер обмена ссылку на заметку в том виде, как её пишет Obsidian. */
 	async copyLink(file: TFile): Promise<void> {
 		const link = this.app.fileManager.generateMarkdownLink(file, file.path);

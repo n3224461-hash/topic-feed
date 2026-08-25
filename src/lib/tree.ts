@@ -73,10 +73,17 @@ export function buildLevel(input: {
 	allTopics: readonly TopicInfo[];
 	/** Скрывать ли папки, внутри которых нет ни топиков, ни досок. */
 	onlyFoldersWithTopics: boolean;
+	/** Папки, которые показываем вопреки фильтру: их только что создали. */
+	keepFolders?: readonly string[];
 }): TreeNode[] {
+	const keep = new Set(input.keepFolders ?? []);
 	const folderNodes: TreeNode[] = [];
 	for (const path of input.folders) {
-		if (input.onlyFoldersWithTopics && !folderHasTopics(path, input.allTopics)) {
+		if (
+			input.onlyFoldersWithTopics &&
+			!keep.has(path) &&
+			!folderHasTopics(path, input.allTopics)
+		) {
 			continue;
 		}
 		const parts = segments(path);
