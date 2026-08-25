@@ -162,6 +162,12 @@
 	display: flex;
 	gap: var(--size-2-1);
 	flex: 0 0 auto;
+	/* Гасим внутренний отступ кнопки: иконка встаёт по правому краю строк списка. */
+	margin-right: calc(var(--size-2-2) * -1);
+}
+
+.topic-feed-filter .clickable-icon {
+	padding: var(--size-2-2);
 }
 
 .topic-feed-nodes {
