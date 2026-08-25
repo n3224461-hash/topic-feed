@@ -113,8 +113,8 @@
 /* ——— проводник ——— */
 
 .topic-feed-explorer {
-	/* 8px слева и справа: подсветка строки не упирается в края сайдбара. */
-	padding: 0 8px;
+	/* 4px слева и справа: подсветка строки не упирается в края сайдбара. */
+	padding: 0 4px;
 	display: flex;
 	flex-direction: column;
 	height: 100%;
@@ -125,7 +125,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: var(--size-4-2) 4px;
+	padding: var(--size-4-2) var(--size-4-2);
 	flex: 0 0 auto;
 }
 
@@ -175,7 +175,7 @@
 	align-items: center;
 	gap: var(--size-4-2);
 	/* Вместе с отступом панели даёт те же 12px, что были у содержимого. */
-	padding: var(--size-4-2) 4px;
+	padding: var(--size-4-2) var(--size-4-2);
 	border-radius: var(--radius-m);
 	cursor: pointer;
 }
