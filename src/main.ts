@@ -21,6 +21,7 @@ import { ORPHAN_VIEW, OrphanFeedView } from "./ui/orphan-view";
 import { ConfirmModal } from "./ui/confirm-modal";
 import { NameModal } from "./ui/name-modal";
 import { TopicPicker } from "./ui/topic-picker";
+import { inLeftPane, leftPaneLeaf, rightPaneLeaf } from "./panes";
 
 /** Переменная оформления, через которую задаётся размер текста бабла. */
 const FONT_VARIABLE = "--topic-feed-bubble-size";
@@ -39,11 +40,8 @@ export default class TopicFeedPlugin extends Plugin {
 	/** Топики, которые пользователь попросил показать как обычную разметку. */
 	private asMarkdown = new Set<string>();
 
-	/** Вкладка справа от ленты, в которой открываются заметки. Переиспользуется. */
-	private detailLeaf: WorkspaceLeaf | null = null;
-
-	/** Вкладка, в которой живёт лента. Новый топик открывается здесь же. */
-	private feedHomeLeaf: WorkspaceLeaf | null = null;
+	/** Идёт перенос ленты в левую панель: не запускаем второй такой же. */
+	private moving = false;
 
 	/** Какая лента сейчас выбрана: путь топика или «orphans». */
 	private activeFeedKey: string | null = null;
@@ -199,17 +197,9 @@ export default class TopicFeedPlugin extends Plugin {
 		await this.app.workspace.revealLeaf(leaf);
 	}
 
-	/** Открывает заметку в панели справа от ленты, переиспользуя уже открытую. */
+	/** Открывает заметку в панели справа от ленты, переиспользуя её вкладку. */
 	openNote(feedLeaf: WorkspaceLeaf, file: TFile): void {
-		// Ленту могли открыть мимо плагина — из файлового дерева или по ссылке.
-		this.feedHomeLeaf = feedLeaf;
-
-		if (this.detailLeaf && !this.isOpen(this.detailLeaf)) this.detailLeaf = null;
-		if (!this.detailLeaf) {
-			this.detailLeaf = this.app.workspace.createLeafBySplit(feedLeaf, "vertical");
-		}
-
-		const leaf = this.detailLeaf;
+		const leaf = rightPaneLeaf(this.app, feedLeaf);
 		void leaf.openFile(file).then(() => {
 			this.app.workspace.setActiveLeaf(leaf, { focus: true });
 		});
@@ -566,23 +556,14 @@ export default class TopicFeedPlugin extends Plugin {
 	private rebuildLater = debounce(() => this.index.rebuild(), 300, true);
 
 	/**
-	 * Вкладка рабочей области, в которой показываем ленту.
+	 * Вкладка, в которой показываем ленту, — всегда в крайней левой панели.
 	 *
 	 * Заметку справа лента открывает сама, и после клика по баблу активной
-	 * становится именно она — открывать в ней следующую ленту нельзя. Поэтому
-	 * сначала возвращаем активность вкладке ленты, а дальше решение принимает
-	 * сам Obsidian: закреплённая вкладка не будет перезаписана, рядом с ней
-	 * откроется новая.
+	 * становится именно она. Если полагаться на «текущую» вкладку, следующая
+	 * лента откроется поверх заметки. Поэтому панель выбираем явно.
 	 */
 	private feedLeaf(): WorkspaceLeaf {
-		const home = this.feedHomeLeaf;
-		if (home && home !== this.detailLeaf && this.isOpen(home)) {
-			this.app.workspace.setActiveLeaf(home, { focus: false });
-		}
-
-		const leaf = this.app.workspace.getLeaf(false);
-		this.feedHomeLeaf = leaf;
-		return leaf;
+		return leftPaneLeaf(this.app);
 	}
 
 	/** Переводит открытые markdown-вкладки с топиками в представление ленты. */
@@ -601,6 +582,40 @@ export default class TopicFeedPlugin extends Plugin {
 				}
 			});
 		}
+
+		this.keepFeedsLeft();
+	}
+
+	/**
+	 * Возвращает ленты в крайнюю левую панель. Топик могли открыть мимо
+	 * плагина — из файлового дерева или по ссылке, — и тогда он попадает
+	 * туда, где в этот момент был фокус.
+	 */
+	private keepFeedsLeft(): void {
+		if (this.moving) return;
+
+		const stray = [...this.app.workspace.getLeavesOfType(FEED_VIEW), ...this.app.workspace.getLeavesOfType(ORPHAN_VIEW)].find(
+			(leaf) => !inLeftPane(this.app, leaf),
+		);
+		if (!stray) return;
+
+		const state = stray.getViewState();
+		this.moving = true;
+		const target = leftPaneLeaf(this.app);
+		if (target === stray) {
+			this.moving = false;
+			return;
+		}
+
+		void target
+			.setViewState({ ...state, active: true })
+			.then(() => {
+				stray.detach();
+				this.app.workspace.setActiveLeaf(target, { focus: true });
+			})
+			.finally(() => {
+				this.moving = false;
+			});
 	}
 
 	/** Файл топика, открытый во вкладке, — в любом из двух представлений. */
@@ -626,15 +641,6 @@ export default class TopicFeedPlugin extends Plugin {
 			...state,
 			type: toMarkdown ? "markdown" : FEED_VIEW,
 		});
-	}
-
-	/** Жива ли вкладка: пользователь мог закрыть её вручную. */
-	private isOpen(leaf: WorkspaceLeaf): boolean {
-		let open = false;
-		this.app.workspace.iterateAllLeaves((item) => {
-			if (item === leaf) open = true;
-		});
-		return open;
 	}
 
 	async loadSettings() {
