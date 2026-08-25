@@ -1,0 +1,25 @@
+/* Стили плагина Topic Feed.
+   Цвета и отступы берём из переменных темы — иначе плагин сломается
+   в тёмной теме или в любой из сотен пользовательских тем. */
+
+.topic-feed-panel {
+	padding: var(--size-4-3);
+}
+
+.topic-feed-panel h4 {
+	margin-top: 0;
+	color: var(--text-normal);
+}
+
+.topic-feed-muted {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.topic-feed-modal .topic-feed-list {
+	max-height: 40vh;
+	overflow-y: auto;
+	margin: var(--size-4-2) 0;
+	padding-left: var(--size-4-4);
+	color: var(--text-muted);
+}
