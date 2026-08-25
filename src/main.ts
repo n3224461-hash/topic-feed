@@ -1,4 +1,5 @@
 import {
+	FileView,
 	MarkdownView,
 	Menu,
 	Notice,
@@ -116,7 +117,13 @@ export default class TopicFeedPlugin extends Plugin {
 
 		// Топик — обычный .md, поэтому Obsidian открывает его редактором.
 		// Подменяем представление, как только вкладка с топиком появилась.
-		this.registerEvent(this.app.workspace.on("layout-change", () => this.swapFeeds()));
+		this.registerEvent(
+			this.app.workspace.on("layout-change", () => {
+				this.swapFeeds();
+				// Панель с заметкой могли просто закрыть — о таком не сообщают.
+				this.dropClosedNote();
+			}),
+		);
 		this.registerEvent(this.app.workspace.on("file-open", () => this.swapFeeds()));
 		this.registerEvent(
 			this.app.workspace.on("active-leaf-change", (leaf) => this.trackActiveFeed(leaf)),
@@ -242,6 +249,20 @@ export default class TopicFeedPlugin extends Plugin {
 	/** Заметка, открытая сейчас в соседней панели. */
 	get activeNote(): string | null {
 		return this.activeNotePath;
+	}
+
+	/** Снимает отметку, если заметка больше нигде не открыта. */
+	private dropClosedNote(): void {
+		const path = this.activeNotePath;
+		if (!path) return;
+
+		let open = false;
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			const view = leaf.view;
+			if (view instanceof FileView && view.file?.path === path) open = true;
+		});
+
+		if (!open) this.setActiveNote(null);
 	}
 
 	/** Отмечает открытую заметку и подсвечивает её бабл во всех лентах. */
