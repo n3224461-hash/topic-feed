@@ -39,7 +39,7 @@ export class OrphanFeedView extends ItemView {
 			items: () => this.plugin.index.notesWithoutTopic(),
 			activePath: () => this.plugin.activeNote,
 			emptyText: "Неразобранных заметок нет.",
-			onOpen: (file) => this.plugin.openNote(this.leaf, file),
+			onOpen: (file, newTab) => this.plugin.openNote(this.leaf, file, { newTab }),
 			onContextMenu: (file, event, select) =>
 				this.plugin.showNoteMenu(file, event, select),
 			onDragStart: (file, event) => this.plugin.startNoteDrag(file, event),

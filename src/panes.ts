@@ -54,13 +54,20 @@ export function leftPaneLeaf(app: App): WorkspaceLeaf {
 	return pane ? tabIn(app, pane) : app.workspace.getLeaf(false);
 }
 
-/** Вкладка в панели справа от заданной. Такой панели нет — отделяем новую. */
-export function rightPaneLeaf(app: App, leaf: WorkspaceLeaf): WorkspaceLeaf {
+/**
+ * Вкладка в панели справа от заданной. Такой панели нет — отделяем новую.
+ * `newTab` заводит отдельную вкладку вместо переиспользования текущей.
+ */
+export function rightPaneLeaf(app: App, leaf: WorkspaceLeaf, newTab = false): WorkspaceLeaf {
 	const all = panes(app);
 	const index = all.findIndex((pane) => pane.parent === leaf.parent);
 	const next = index >= 0 ? all[index + 1] : undefined;
 
-	return next ? tabIn(app, next) : app.workspace.createLeafBySplit(leaf, "vertical");
+	if (!next) return app.workspace.createLeafBySplit(leaf, "vertical");
+
+	return newTab
+		? app.workspace.createLeafInParent(next.parent as WorkspaceSplit, -1)
+		: tabIn(app, next);
 }
 
 /** Лежит ли вкладка в крайней левой панели. Панель одна — считаем, что да. */

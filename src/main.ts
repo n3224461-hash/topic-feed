@@ -210,9 +210,17 @@ export default class TopicFeedPlugin extends Plugin {
 		await this.app.workspace.revealLeaf(leaf);
 	}
 
-	/** Открывает заметку в панели справа от ленты, переиспользуя её вкладку. */
-	openNote(feedLeaf: WorkspaceLeaf, file: TFile, focusTitle = false): void {
-		const leaf = rightPaneLeaf(this.app, feedLeaf);
+	/**
+	 * Открывает заметку в панели справа от ленты, переиспользуя её вкладку.
+	 * `newTab` открывает заметку отдельной вкладкой рядом — средним кликом.
+	 */
+	openNote(
+		feedLeaf: WorkspaceLeaf,
+		file: TFile,
+		options: { focusTitle?: boolean; newTab?: boolean } = {},
+	): void {
+		const { focusTitle = false, newTab = false } = options;
+		const leaf = rightPaneLeaf(this.app, feedLeaf, newTab);
 		this.setActiveNote(file.path);
 		void leaf.openFile(file).then(() => {
 			this.app.workspace.setActiveLeaf(leaf, { focus: true });
@@ -568,7 +576,7 @@ export default class TopicFeedPlugin extends Plugin {
 			const file = await this.app.vault.create(path, "");
 			if (topic) await this.actions.assignTopic(file, topic);
 			this.index.rebuild();
-			this.openNote(feedLeaf, file, true);
+			this.openNote(feedLeaf, file, { focusTitle: true });
 		} catch (error) {
 			console.error("Topic Feed: не удалось создать заметку", path, error);
 			new Notice("Не удалось создать заметку — подробности в консоли разработчика");

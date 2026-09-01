@@ -22,7 +22,8 @@ export interface FeedListOptions {
 	emptyText: string;
 	/** Путь заметки, открытой в соседней панели: её бабл подсвечивается. */
 	activePath?: () => string | null;
-	onOpen: (file: TFile) => void;
+	/** Второй аргумент — открыть отдельной вкладкой (средний клик). */
+	onOpen: (file: TFile, newTab: boolean) => void;
 	/** Третий аргумент включает бабл в выделение — пункт «Выбрать» в меню. */
 	onContextMenu?: (file: TFile, event: MouseEvent, select: () => void) => void;
 	onDragStart?: (file: TFile, event: DragEvent) => void;
@@ -277,7 +278,18 @@ export class FeedList {
 				return;
 			}
 			const file = this.fileAt(note.path);
-			if (file) this.opts.onOpen(file);
+			if (file) this.opts.onOpen(file, false);
+		});
+
+		// Средний клик открывает заметку отдельной вкладкой справа, не трогая
+		// уже открытую. Ловим нажатие: события `click` для средней кнопки
+		// не бывает вовсе — браузер шлёт для неё `auxclick`.
+		bubble.addEventListener("mousedown", (event) => {
+			if (event.button !== 1) return;
+			// Иначе Electron включает автопрокрутку — лента поедет под курсором.
+			event.preventDefault();
+			const file = this.fileAt(note.path);
+			if (file) this.opts.onOpen(file, true);
 		});
 
 		bubble.addEventListener("contextmenu", (event) => {
